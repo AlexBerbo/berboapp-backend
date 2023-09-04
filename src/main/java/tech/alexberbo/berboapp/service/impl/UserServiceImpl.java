@@ -1,0 +1,69 @@
+package tech.alexberbo.berboapp.service.impl;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import tech.alexberbo.berboapp.dto.UserDTO;
+import tech.alexberbo.berboapp.exception.CodeExpiredException;
+import tech.alexberbo.berboapp.exception.EmailDoesNotExistException;
+import tech.alexberbo.berboapp.exception.EmailExistsException;
+import tech.alexberbo.berboapp.exception.PasswordResetCodeExpiredException;
+import tech.alexberbo.berboapp.model.Role;
+import tech.alexberbo.berboapp.model.User;
+import tech.alexberbo.berboapp.repository.RoleRepository;
+import tech.alexberbo.berboapp.repository.UserRepository;
+import tech.alexberbo.berboapp.service.UserService;
+
+import static tech.alexberbo.berboapp.dtomapper.UserDTOMapper.fromUser;
+
+/**
+    This is implementing the UserService which is just calling the UserRepository implementation where all the logic is actually done.
+ */
+@Service
+@RequiredArgsConstructor
+public class UserServiceImpl implements UserService {
+    private final UserRepository<User> userRepository;
+    private final RoleRepository<Role> roleRepository;
+    @Override
+    public UserDTO createUser(User user) throws EmailExistsException {
+        return mapToUserDTO(userRepository.register(user));
+    }
+
+    @Override
+    public UserDTO getUserByEmail(String email) {
+        return mapToUserDTO(userRepository.getUserByEmail(email));
+    }
+
+    @Override
+    public void sendVerificationCode(UserDTO user) {
+        userRepository.sendVerificationCode(user);
+    }
+
+    @Override
+    public UserDTO verifyCode(String email, String code) throws CodeExpiredException {
+        return mapToUserDTO(userRepository.verifyCode(email, code));
+    }
+
+    @Override
+    public void resetPassword(String email) throws EmailDoesNotExistException {
+        userRepository.resetPassword(email);
+    }
+
+    @Override
+    public UserDTO verifyVerificationURL(String code) throws PasswordResetCodeExpiredException {
+        return mapToUserDTO(userRepository.verifyVerificationURL(code));
+    }
+
+    @Override
+    public void renewPassword(String url, String password, String confirmPassword) {
+        userRepository.renewPassword(url, password, confirmPassword);
+    }
+
+    @Override
+    public UserDTO verifyAccount(String key) {
+        return mapToUserDTO(userRepository.verifyAccount(key));
+    }
+
+    private UserDTO mapToUserDTO(User user) {
+        return fromUser(user, roleRepository.getRoleByUserId(user.getId()));
+    }
+}
