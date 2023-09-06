@@ -11,7 +11,7 @@ import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
 
-@SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
+@SpringBootApplication//(exclude = {SecurityAutoConfiguration.class})
 public class BerboappApplication {
 
 	public static void main(String[] args) {

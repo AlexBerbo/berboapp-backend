@@ -26,6 +26,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.*;
 import static tech.alexberbo.berboapp.constant.security.SecurityConstants.TOKEN_PREFIX;
 import static tech.alexberbo.berboapp.dtomapper.UserDTOMapper.toUser;
+import static tech.alexberbo.berboapp.util.UserUtil.getAuthenticatedUser;
 
 /**
     This is a controller that controls what business logic will be executed when a request comes in.
@@ -80,7 +81,7 @@ public class UserController extends ExceptionHandling {
     @GetMapping(path = "/profile")
     public ResponseEntity<HttpResponse> profile(Authentication authentication) {
         // TODO FIX ERROR
-        UserDTO user = userService.getUserByEmail(authentication.getName());
+        UserDTO user = userService.getUserByEmail(getAuthenticatedUser(authentication).getEmail());
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .status(OK)
