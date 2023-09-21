@@ -12,12 +12,19 @@ spring:
     url: jdbc:mysql://localhost:3306/berboapp
     password: password
     username: root
+  flyway:
+    enabled: true
+    url: jdbc:mysql://localhost:3306/berboapp
+    user: root
+    password: password
+    schemas: berboapp
+    locations: classpath:db/migration/mysql
   jpa:
     database-platform: org.hibernate.dialect.MySQL8InnoDBDialect
-    generate-ddl: true
+    generate-ddl: false
     show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     properties:
       hibernate:
         globally_quoted_identifiers: true

@@ -4,11 +4,9 @@ CREATE SCHEMA IF NOT EXISTS berboapp;
 -- SET TIME_ZONE = 'Europe/Berlin';
 -- SET TIME_ZONE = '+2:00';
 
-USE berboapp;
+DROP TABLE IF EXISTS berboapp.Users;
 
-DROP TABLE IF EXISTS Users;
-
-CREATE TABLE Users
+CREATE TABLE berboapp.Users
 (
         user_id      BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         first_name   VARCHAR(50) NOT NULL,
@@ -27,9 +25,9 @@ CREATE TABLE Users
         CONSTRAINT UQ_Users_Email UNIQUE (email)
 );
 
-DROP TABLE IF EXISTS Roles;
+DROP TABLE IF EXISTS berboapp.Roles;
 
-CREATE TABLE Roles
+CREATE TABLE berboapp.Roles
 (
     role_id    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     name       VARCHAR(50) NOT NULL,
@@ -37,9 +35,9 @@ CREATE TABLE Roles
     CONSTRAINT UQ_Roles_Name UNIQUE (name)
 );
 
-DROP TABLE IF EXISTS UserRoles;
+DROP TABLE IF EXISTS berboapp.UserRoles;
 
-CREATE TABLE UserRoles
+CREATE TABLE berboapp.UserRoles
 (
     id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user_id     BIGINT UNSIGNED NOT NULL,
@@ -49,9 +47,9 @@ CREATE TABLE UserRoles
     CONSTRAINT UQ_UserRole_User_Id UNIQUE (user_id)
 );
 
-DROP TABLE IF EXISTS Events;
+DROP TABLE IF EXISTS berboapp.Events;
 
-CREATE TABLE Events
+CREATE TABLE berboapp.Events
 (
     event_id    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     type        VARCHAR(50) NOT NULL CHECK(type IN ('LOGIN_ATTEMPT',
@@ -67,9 +65,9 @@ CREATE TABLE Events
     CONSTRAINT UQ_Events_Type UNIQUE (type)
 );
 
-DROP TABLE IF EXISTS UserEvents;
+DROP TABLE IF EXISTS berboapp.UserEvents;
 
-CREATE TABLE UserEvents
+CREATE TABLE berboapp.UserEvents
 (
     id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user_id     BIGINT UNSIGNED NOT NULL,
@@ -81,9 +79,9 @@ CREATE TABLE UserEvents
     FOREIGN KEY (event_id) REFERENCES Events (event_id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
-DROP TABLE IF EXISTS AccountVerifications;
+DROP TABLE IF EXISTS berboapp.AccountVerifications;
 
-CREATE TABLE AccountVerifications
+CREATE TABLE berboapp.AccountVerifications
 (
     id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user_id     BIGINT UNSIGNED NOT NULL,
@@ -94,9 +92,9 @@ CREATE TABLE AccountVerifications
     CONSTRAINT UQ_AccountVerifications_Url UNIQUE (url)
 );
 
-DROP TABLE IF EXISTS PasswordResetVerifications;
+DROP TABLE IF EXISTS berboapp.PasswordResetVerifications;
 
-CREATE TABLE PasswordResetVerifications
+CREATE TABLE berboapp.PasswordResetVerifications
 (
     id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user_id         BIGINT UNSIGNED NOT NULL,
@@ -107,9 +105,9 @@ CREATE TABLE PasswordResetVerifications
     CONSTRAINT UQ_PasswordResetVerifications_Url UNIQUE (url)
 );
 
-DROP TABLE IF EXISTS TwoFactorVerifications;
+DROP TABLE IF EXISTS berboapp.TwoFactorVerifications;
 
-CREATE TABLE TwoFactorVerifications
+CREATE TABLE berboapp.TwoFactorVerifications
 (
     id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user_id         BIGINT UNSIGNED NOT NULL,
