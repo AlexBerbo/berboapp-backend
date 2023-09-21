@@ -10,13 +10,13 @@ server:
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/berboapp
-    password: password
+    password: ${PASSWORD}
     username: root
   flyway:
     enabled: true
     url: jdbc:mysql://localhost:3306/berboapp
     user: root
-    password: password
+    password: ${PASSWORD}
     schemas: berboapp
     locations: classpath:db/migration/mysql
   jpa:
