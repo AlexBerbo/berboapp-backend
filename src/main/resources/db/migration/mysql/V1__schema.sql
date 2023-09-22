@@ -4,8 +4,6 @@ CREATE SCHEMA IF NOT EXISTS berboapp;
 -- SET TIME_ZONE = 'Europe/Berlin';
 -- SET TIME_ZONE = '+2:00';
 
-DROP TABLE IF EXISTS berboapp.Users;
-
 CREATE TABLE berboapp.Users
 (
         user_id      BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -25,8 +23,6 @@ CREATE TABLE berboapp.Users
         CONSTRAINT UQ_Users_Email UNIQUE (email)
 );
 
-DROP TABLE IF EXISTS berboapp.Roles;
-
 CREATE TABLE berboapp.Roles
 (
     role_id    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -34,8 +30,6 @@ CREATE TABLE berboapp.Roles
     permission VARCHAR(255) NOT NULL,
     CONSTRAINT UQ_Roles_Name UNIQUE (name)
 );
-
-DROP TABLE IF EXISTS berboapp.UserRoles;
 
 CREATE TABLE berboapp.UserRoles
 (
@@ -46,8 +40,6 @@ CREATE TABLE berboapp.UserRoles
     FOREIGN KEY (role_id) REFERENCES Roles (role_id) ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT UQ_UserRole_User_Id UNIQUE (user_id)
 );
-
-DROP TABLE IF EXISTS berboapp.Events;
 
 CREATE TABLE berboapp.Events
 (
@@ -65,8 +57,6 @@ CREATE TABLE berboapp.Events
     CONSTRAINT UQ_Events_Type UNIQUE (type)
 );
 
-DROP TABLE IF EXISTS berboapp.UserEvents;
-
 CREATE TABLE berboapp.UserEvents
 (
     id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -79,8 +69,6 @@ CREATE TABLE berboapp.UserEvents
     FOREIGN KEY (event_id) REFERENCES Events (event_id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
-DROP TABLE IF EXISTS berboapp.AccountVerifications;
-
 CREATE TABLE berboapp.AccountVerifications
 (
     id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -92,8 +80,6 @@ CREATE TABLE berboapp.AccountVerifications
     CONSTRAINT UQ_AccountVerifications_Url UNIQUE (url)
 );
 
-DROP TABLE IF EXISTS berboapp.PasswordResetVerifications;
-
 CREATE TABLE berboapp.PasswordResetVerifications
 (
     id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -104,8 +90,6 @@ CREATE TABLE berboapp.PasswordResetVerifications
     CONSTRAINT UQ_PasswordResetVerifications_User_Id UNIQUE (user_id),
     CONSTRAINT UQ_PasswordResetVerifications_Url UNIQUE (url)
 );
-
-DROP TABLE IF EXISTS berboapp.TwoFactorVerifications;
 
 CREATE TABLE berboapp.TwoFactorVerifications
 (
