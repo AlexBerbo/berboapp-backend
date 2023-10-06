@@ -20,7 +20,7 @@ import tech.alexberbo.berboapp.handler.CustomAccessDeniedHandler;
 import tech.alexberbo.berboapp.handler.CustomAuthenticationEntryPoint;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
-import static tech.alexberbo.berboapp.constant.security.SecurityConstants.*;
+import static tech.alexberbo.berboapp.constant.security.SecurityConstants.PUBLIC_URLS;
 
 /**
     Custom security configuration, allowing certain urls to be permitted without authentication, making other
@@ -40,7 +40,7 @@ public class SecurityConfig {
     private final AuthorizationFilter authorizationFilter;
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable).cors(AbstractHttpConfigurer::disable);
+        http.csrf(AbstractHttpConfigurer::disable);
         http.sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(STATELESS));
         http.authorizeHttpRequests(matcher -> matcher.requestMatchers(PUBLIC_URLS).permitAll());
         http.authorizeHttpRequests(matcher -> matcher.requestMatchers(HttpMethod.DELETE, "/user/delete/**").hasAnyAuthority("DELETE:USER"));

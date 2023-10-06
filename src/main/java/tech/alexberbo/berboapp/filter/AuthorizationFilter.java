@@ -15,7 +15,6 @@ import tech.alexberbo.berboapp.provider.JWTProvider;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
@@ -23,7 +22,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpMethod.OPTIONS;
 import static tech.alexberbo.berboapp.constant.security.FilterConstants.PUBLIC_URLS;
-import static tech.alexberbo.berboapp.constant.security.SecurityConstants.*;
+import static tech.alexberbo.berboapp.constant.security.SecurityConstants.TOKEN_PREFIX;
 import static tech.alexberbo.berboapp.exception.FilterExceptionHandler.handleExceptions;
 
 @Component
@@ -41,11 +40,11 @@ public class AuthorizationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filter) throws ServletException, IOException {
         try {
-            Map<String, String> values = getValues(request);
             String token = getToken(request);
-            if(jwtProvider.isTokenValid(token, values.get(EMAIL))) {
-                List<GrantedAuthority> authorities = jwtProvider.getAuthorities(values.get(TOKEN));
-                Authentication authentication = jwtProvider.getAuthentication(values.get(EMAIL), authorities, request);
+            Long userId = getUserId(request);
+            if(jwtProvider.isTokenValid(token, userId)) {
+                List<GrantedAuthority> authorities = jwtProvider.getAuthorities(token);
+                Authentication authentication = jwtProvider.getAuthentication(userId, authorities, request);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } else { SecurityContextHolder.clearContext(); }
             filter.doFilter(request, response);
@@ -61,8 +60,8 @@ public class AuthorizationFilter extends OncePerRequestFilter {
                 request.getMethod().equalsIgnoreCase(OPTIONS.name()) || asList(PUBLIC_URLS).contains(request.getRequestURI()) ;
     }
 
-    private Map<String, String> getValues(HttpServletRequest request) {
-        return Map.of(EMAIL, jwtProvider.getSubject(getToken(request), request), TOKEN, getToken(request));
+    private Long getUserId(HttpServletRequest request) {
+        return jwtProvider.getSubject(getToken(request), request);
     }
 
     private String getToken(HttpServletRequest request) {

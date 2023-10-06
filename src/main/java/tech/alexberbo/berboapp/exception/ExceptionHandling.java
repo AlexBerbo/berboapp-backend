@@ -94,7 +94,8 @@ public class ExceptionHandling extends ResponseEntityExceptionHandler implements
         return sendResponse(INTERNAL_SERVER_ERROR, e.getMessage());
     }
     private ResponseEntity<HttpResponse> sendResponse(HttpStatus status, String message) {
-        return ResponseEntity.badRequest().body(HttpResponse.builder()
+        return ResponseEntity.badRequest().body(
+                HttpResponse.builder()
                 .status(status)
                 .statusCode(status.value())
                 .reason(message)

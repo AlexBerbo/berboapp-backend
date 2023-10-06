@@ -7,6 +7,7 @@ import tech.alexberbo.berboapp.exception.CodeExpiredException;
 import tech.alexberbo.berboapp.exception.EmailDoesNotExistException;
 import tech.alexberbo.berboapp.exception.EmailExistsException;
 import tech.alexberbo.berboapp.exception.PasswordResetCodeExpiredException;
+import tech.alexberbo.berboapp.form.UpdateForm;
 import tech.alexberbo.berboapp.model.Role;
 import tech.alexberbo.berboapp.model.User;
 import tech.alexberbo.berboapp.repository.RoleRepository;
@@ -61,6 +62,16 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO verifyAccount(String key) {
         return mapToUserDTO(userRepository.verifyAccount(key));
+    }
+
+    @Override
+    public UserDTO updateUser(UpdateForm user) {
+        return mapToUserDTO(userRepository.updateUserData(user));
+    }
+
+    @Override
+    public UserDTO getUserById(Long userId) {
+        return mapToUserDTO(userRepository.getUser(userId));
     }
 
     private UserDTO mapToUserDTO(User user) {
