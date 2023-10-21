@@ -38,6 +38,7 @@ import static tech.alexberbo.berboapp.util.UserUtil.getAuthenticatedUser;
 @RestController
 @RequestMapping(path = "/user")
 @RequiredArgsConstructor
+@CrossOrigin
 public class UserController extends ExceptionHandling {
     private final UserService userService;
     private final AuthService authService;

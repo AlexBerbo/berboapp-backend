@@ -1,5 +1,6 @@
 package tech.alexberbo.berboapp.exception;
 
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +13,7 @@ import tech.alexberbo.berboapp.model.HttpResponse;
 import java.io.OutputStream;
 
 import static java.time.LocalTime.now;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @Slf4j
@@ -24,7 +24,11 @@ public class FilterExceptionHandler {
                 e instanceof DisabledException || e instanceof LockedException) {
             httpResponse = getHttpResponse(response, e.getMessage(), BAD_REQUEST);
             writeResponse(httpResponse, response);
-        } else {
+        } else if (e instanceof TokenExpiredException) {
+            httpResponse = getHttpResponse(response, "You need to login again!", UNAUTHORIZED);
+            writeResponse(httpResponse, response);
+        }
+        else {
             httpResponse = getHttpResponse(response, "An Error occurred, please try again later!", INTERNAL_SERVER_ERROR);
             writeResponse(httpResponse, response);
         }
