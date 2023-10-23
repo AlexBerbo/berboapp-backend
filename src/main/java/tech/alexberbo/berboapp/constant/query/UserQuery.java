@@ -29,4 +29,5 @@ public interface UserQuery {
     String UPDATE_PASSWORD_QUERY = "UPDATE Users SET password = :password where user_id = :userId";
     String UPDATE_USER_SETTINGS_QUERY = "UPDATE Users SET enabled = :enabled, non_locked = :notLocked WHERE user_id = :userId";
     String UPDATE_USER_MFA_QUERY = "UPDATE Users SET using_mfa = :isUsingMfa WHERE email = :email";
+    String UPDATE_USER_IMAGE_QUERY = "UPDATE Users SET image_url = :imageUrl WHERE user_id = :userId";
 }
