@@ -280,6 +280,47 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
         }
     }
 
+    @Override
+    public void updatePassword(Long id, String currentPassword, String newPassword, String confirmPassword) {
+        if(!newPassword.equals(confirmPassword)) { throw new ApiException("Passwords do not match!"); }
+        User user = getUser(id);
+        if(encoder.matches(currentPassword, user.getPassword())) {
+            try {
+                jdbc.update(UPDATE_PASSWORD_QUERY, Map.of("password", encoder.encode(newPassword), "userId", user.getId()));
+            } catch (Exception e) {
+                log.info(e.getMessage());
+                throw new ApiException("Something went wrong, please try again!");
+            }
+        }
+        else {
+            throw new ApiException("Current password do not match!");
+        }
+    }
+
+    @Override
+    public void updateSettings(Long userId, Boolean enabled, Boolean notLocked) {
+        try {
+            jdbc.update(UPDATE_USER_SETTINGS_QUERY, Map.of("userId", userId, "enabled", enabled, "notLocked", notLocked));
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            throw new ApiException("An error occurred please reset your password again!");
+        }
+    }
+
+    @Override
+    public User updateMfa(String email) {
+        User user = getUserByEmail(email);
+        if(user.getPhone().isBlank()) { throw new ApiException("You need to have a phone number to use MFA!"); }
+        user.setUsingMfa(!user.isUsingMfa());
+        try {
+            jdbc.update(UPDATE_USER_MFA_QUERY, Map.of("email", email, "isUsingMfa", user.isUsingMfa()));
+            return user;
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            throw new ApiException("Could not update MFA!");
+        }
+    }
+
     /**
         Returns true if the statement is true with the url that has been passed on in the method
      */

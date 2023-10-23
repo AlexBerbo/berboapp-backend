@@ -10,7 +10,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.alexberbo.berboapp.dto.UserDTO;
 import tech.alexberbo.berboapp.exception.*;
 import tech.alexberbo.berboapp.form.LoginForm;
+import tech.alexberbo.berboapp.form.SettingsForm;
 import tech.alexberbo.berboapp.form.UpdateForm;
+import tech.alexberbo.berboapp.form.UpdatePasswordForm;
 import tech.alexberbo.berboapp.model.HttpResponse;
 import tech.alexberbo.berboapp.model.User;
 import tech.alexberbo.berboapp.model.UserPrincipal;
@@ -93,7 +95,7 @@ public class UserController extends ExceptionHandling {
                         .reason(OK.getReasonPhrase())
                         .message("Profile Retrieved")
                         .developerMessage("You made it bro!")
-                        .data(Map.of("user", user))
+                        .data(Map.of("user", user, "roles", roleService.getAllRoles()))
                         .build());
     }
 
@@ -242,7 +244,62 @@ public class UserController extends ExceptionHandling {
                         .build()
         );
     }
+
+    @PatchMapping("/update-password")
+    public ResponseEntity<HttpResponse> updatePassword(Authentication authentication, @RequestBody @Valid UpdatePasswordForm form) {
+        UserDTO user = getAuthenticatedUser(authentication);
+        userService.updatePassword(user.getId(), form.getCurrentPassword(), form.getNewPassword(), form.getConfirmPassword());
+        return ResponseEntity.ok().body(
+                HttpResponse.builder().status(OK)
+                        .statusCode(OK.value())
+                        .message("Password updated successfully!")
+                        .timeStamp(now().toString())
+                        .build()
+        );
+    }
     // END - Password Reset
+
+    @PatchMapping("/update-role/{roleName}")
+    public ResponseEntity<HttpResponse> updateRole(Authentication authentication, @PathVariable("roleName") String roleName) {
+        UserDTO user = getAuthenticatedUser(authentication);
+        userService.updateRole(user.getId(), roleName);
+        return ResponseEntity.ok().body(
+                HttpResponse.builder().status(OK)
+                        .statusCode(OK.value())
+                        .message("Role updated successfully!")
+                        .data(Map.of("user", userService.getUserById(user.getId()), "roles", roleService.getAllRoles()))
+                        .timeStamp(now().toString())
+                        .build()
+        );
+    }
+
+    @PatchMapping("/update-settings")
+    public ResponseEntity<HttpResponse> updateRole(Authentication authentication, @RequestBody @Valid SettingsForm form) {
+        UserDTO user = getAuthenticatedUser(authentication);
+        userService.updateSettings(user.getId(), form.getEnabled(), form.getNotLocked());
+        return ResponseEntity.ok().body(
+                HttpResponse.builder().status(OK)
+                        .statusCode(OK.value())
+                        .message("Account settings updated successfully!")
+                        .data(Map.of("user", userService.getUserById(user.getId()), "roles", roleService.getAllRoles()))
+                        .timeStamp(now().toString())
+                        .build()
+        );
+    }
+
+    @PatchMapping("/update-mfa")
+    public ResponseEntity<HttpResponse> updateRole(Authentication authentication) throws InterruptedException {
+        TimeUnit.SECONDS.sleep(1);
+        UserDTO user = userService.updateMfa(getAuthenticatedUser(authentication).getEmail());
+        return ResponseEntity.ok().body(
+                HttpResponse.builder().status(OK)
+                        .statusCode(OK.value())
+                        .message("MFA updated successfully!")
+                        .data(Map.of("user", user, "roles", roleService.getAllRoles()))
+                        .timeStamp(now().toString())
+                        .build()
+        );
+    }
 
     /**
         Presenting a white label error page when a user enters an url that does not exist.
