@@ -3,6 +3,7 @@ package tech.alexberbo.berboapp.repository.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateFormatUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -18,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.alexberbo.berboapp.dto.UserDTO;
 import tech.alexberbo.berboapp.enumerator.VerificationType;
+import tech.alexberbo.berboapp.event.NewUserEvent;
 import tech.alexberbo.berboapp.exception.*;
 import tech.alexberbo.berboapp.form.UpdateForm;
 import tech.alexberbo.berboapp.model.Role;
@@ -39,6 +41,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang3.time.DateUtils.addDays;
 import static tech.alexberbo.berboapp.constant.exception.ExceptionConstants.*;
 import static tech.alexberbo.berboapp.constant.query.UserQuery.*;
+import static tech.alexberbo.berboapp.enumerator.EventType.LOGIN_ATTEMPT_SUCCESS;
 import static tech.alexberbo.berboapp.enumerator.RoleType.ROLE_USER;
 import static tech.alexberbo.berboapp.enumerator.VerificationType.ACCOUNT;
 import static tech.alexberbo.berboapp.enumerator.VerificationType.PASSWORD;
@@ -57,6 +60,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
     private final RoleRepository<Role> roleRepository;
     private final EmailService emailService;
     private final BCryptPasswordEncoder encoder;
+    private final ApplicationEventPublisher publisher;
 
     /**
         This method is from the UserDetailsService, when the user logs in, it loads the user by username, in this case by email.
@@ -185,6 +189,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
             User userByEmail = jdbc.queryForObject(SELECT_USER_BY_EMAIL_QUERY, Map.of("email", email), new UserRowMapper());
             if(userByCode.getEmail().equalsIgnoreCase(userByEmail.getEmail())) {
                 jdbc.update(DELETE_CODE_QUERY, Map.of("code", code));
+                publisher.publishEvent(new NewUserEvent(email, LOGIN_ATTEMPT_SUCCESS));
                 return userByCode;
             } else {
                 throw new ApiException("Code is invalid, please try again!");
