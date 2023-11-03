@@ -56,7 +56,7 @@ public class InvoiceController extends ExceptionHandling {
         );
     }
 
-    @PostMapping("/new")
+    @GetMapping("/new")
     ResponseEntity<HttpResponse> newInvoice(@AuthenticationPrincipal UserDTO user) {
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
@@ -72,19 +72,21 @@ public class InvoiceController extends ExceptionHandling {
 
     @GetMapping("/get/{id}")
     ResponseEntity<HttpResponse> getInvoice(@AuthenticationPrincipal UserDTO user, @PathVariable("id") Long id) {
+        Invoice invoice = invoiceService.getInvoice(id);
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .status(OK)
                         .statusCode(OK.value())
                         .data(Map.of("user", userService.getUserById(user.getId()),
-                                "invoice", invoiceService.getInvoice(id)))
-                        .message("Invoice retrieved!")
+                                "invoice", invoice,
+                                "customer", invoice.getCustomer()))
+                        .message("User, invoice and customer!")
                         .timeStamp(now().toString())
                         .build()
         );
     }
 
-    @GetMapping("/addtocustomer/{id}")
+    @PostMapping("/add-to-customer/{id}")
     ResponseEntity<HttpResponse> addInvoiceToCustomer(@AuthenticationPrincipal UserDTO user, @PathVariable("id") Long id, @RequestBody Invoice invoice) {
         invoiceService.addInvoiceToCustomer(id, invoice);
         return ResponseEntity.ok().body(
@@ -93,7 +95,7 @@ public class InvoiceController extends ExceptionHandling {
                         .statusCode(OK.value())
                         .data(Map.of("user", userService.getUserById(user.getId()),
                                 "customers", customerService.getCustomers()))
-                        .message("Customers retrieved!")
+                        .message(String.format("Invoice added to the Customer with id: %s", id))
                         .timeStamp(now().toString())
                         .build()
         );

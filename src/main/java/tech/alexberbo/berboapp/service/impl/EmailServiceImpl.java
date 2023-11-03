@@ -7,6 +7,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import tech.alexberbo.berboapp.model.Message;
 import tech.alexberbo.berboapp.service.EmailService;
 
 import java.util.Date;
@@ -90,6 +91,22 @@ public class EmailServiceImpl implements EmailService {
         } catch (Exception e) {
             log.info("Error: " + e.getMessage());
             throw new CancellationException("Error, can't send Email to: " + email);
+        }
+    }
+
+    @Override
+    public void sendReport(Message message, String email) {
+        try {
+            MimeMessage msg = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(msg, UTF_8);
+            helper.setSubject(SUBJECT_REPORT);
+            helper.setTo(ADMIN);
+            helper.setText("Report came in from user: " + email + "\n\n" + message.getContent());
+            helper.setSentDate(new Date());
+            mailSender.send(msg);
+        } catch (Exception e) {
+            log.info("Error: " + e.getMessage());
+            throw new CancellationException("Error, can't send Email to: " + ADMIN);
         }
     }
 }

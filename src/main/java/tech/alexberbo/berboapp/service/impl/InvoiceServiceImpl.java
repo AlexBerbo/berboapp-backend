@@ -23,6 +23,7 @@ import static org.springframework.data.domain.PageRequest.of;
 public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final CustomerRepository customerRepository;
+
     @Override
     public Invoice createInvoice(Invoice invoice) {
         invoice.setInvoiceNumber(randomAlphanumeric(10).toUpperCase());

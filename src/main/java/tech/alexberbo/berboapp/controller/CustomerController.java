@@ -34,9 +34,15 @@ public class CustomerController extends ExceptionHandling {
                                               @RequestParam Optional<Integer> page,
                                               @RequestParam Optional<Integer> size) {
         return ResponseEntity.ok().body(
-                createResponse(OK, user, customerService.getCustomers(
-                                page.orElse(0),
-                                size.orElse(10)), "Customers retrieved!")
+                HttpResponse.builder()
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .data(Map.of("user", userService.getUserById(user.getId()),
+                                "customer", customerService.getCustomers(page.orElse(0), size.orElse(10)),
+                                "stats", customerService.getStats()))
+                        .message("Customers retrieved!")
+                        .timeStamp(now().toString())
+                        .build()
         );
     }
 
@@ -65,7 +71,7 @@ public class CustomerController extends ExceptionHandling {
     ResponseEntity<HttpResponse> updateCustomer(@AuthenticationPrincipal UserDTO user, @RequestBody Customer customer) {
         Customer updateCustomer = customerService.updateCustomer(customer);
         return ResponseEntity.ok().body(
-                createResponse(CREATED, user, updateCustomer, "Customer updated!")
+                createResponse(OK, user, updateCustomer, "Customer updated!")
         );
     }
 
