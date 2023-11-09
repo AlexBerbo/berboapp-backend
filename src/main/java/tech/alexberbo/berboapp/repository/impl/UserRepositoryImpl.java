@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
@@ -103,7 +104,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
             roleRepository.setUserRole(user.getId(), ROLE_USER.name());
             String verificationUrl = getVerificationUrl(UUID.randomUUID().toString(), ACCOUNT.getType().toLowerCase());
             jdbc.update(INSERT_ACCOUNT_VERIFICATION_URL_QUERY, Map.of("userId", user.getId(), "url", verificationUrl));
-            emailService.sendVerifyAccountEmail(user.getEmail(), user.getFirstName(), verificationUrl);
+            sendEmail(user.getEmail(), user.getFirstName(), verificationUrl, ACCOUNT);
             // sendTwoFactorAuthCode();
             user.setEnabled(false);
             user.setNotLocked(true);
@@ -112,6 +113,10 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
             log.info(e.getMessage());
             throw new ApiException("An Error occurred, please try again later.");
         }
+    }
+
+    private void sendEmail(String email, String firstName, String verificationUrl, VerificationType verificationType) {
+        CompletableFuture.runAsync(() -> emailService.sendVerifyEmail(email, firstName, verificationUrl, verificationType));
     }
 
     @Override
@@ -168,6 +173,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
             jdbc.update(INSERT_ACCOUNT_VERIFICATION_CODE_QUERY, Map.of("userId", user.getId(), "code", verificationCode, "expirationDate", expirationDate));
             emailService.sendTwoFactorCode(user.getFirstName(), user.getEmail(), verificationCode);
         } catch (Exception e) {
+            jdbc.update(DELETE_FROM_ACCOUNT_VERIFICATION_QUERY, Map.of("userId", user.getId()));
             log.info(e.getMessage());
             throw new ApiException("An error occurred");
         }
@@ -216,7 +222,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
             User user = getUserByEmail(email);
             jdbc.update(DELETE_PASSWORD_VERIFICATION_URL_BY_USER_ID, Map.of("userId", user.getId()));
             jdbc.update(INSERT_PASSWORD_VERIFICATION_URL, Map.of("userId", user.getId(), "url", verificationUrl, "expirationDate", expirationDate));
-            emailService.sendPasswordResetEmail(user.getFirstName(), user.getEmail(), verificationUrl);
+            sendEmail(user.getEmail(), user.getFirstName(), verificationUrl, PASSWORD);
             log.info("URL: " + verificationUrl);
         } catch (Exception e) {
             throw new ApiException("An error occurred! Please try again or contact berbo99@gmail.com");
@@ -247,11 +253,11 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
         Simple change password checks and updating the database with the new password if they match.
      */
     @Override
-    public void renewPassword(String url, String password, String confirmPassword) {
-        if(!password.equals(confirmPassword)) throw new ApiException("Passwords do not match, try again.");
+    public void resetPassword(Long userId, String newPassword, String confirmNewPassword) {
+        if(!newPassword.equals(confirmNewPassword)) throw new ApiException("Passwords do not match, try again.");
         try {
-            jdbc.update(UPDATE_USR_PASSWORD_BY_URL_QUERY, Map.of("password", encoder.encode(password), "url", getVerificationUrl(url, PASSWORD.getType().toLowerCase())));
-            jdbc.update(DELETE_PASSWORD_URL_QUERY, Map.of("url", getVerificationUrl(url, PASSWORD.getType().toLowerCase())));
+            jdbc.update(UPDATE_USER_PASSWORD_BY_USER_ID_QUERY, Map.of("userId", userId, "newPassword", encoder.encode(newPassword)));
+            jdbc.update(DELETE_PASSWORD_VERIFICATION_URL_BY_USER_ID, Map.of("userId", userId));
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new ApiException("An Error occurred!");

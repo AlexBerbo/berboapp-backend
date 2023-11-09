@@ -1,6 +1,9 @@
 package tech.alexberbo.berboapp.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -8,11 +11,14 @@ import tech.alexberbo.berboapp.dto.UserDTO;
 import tech.alexberbo.berboapp.exception.ExceptionHandling;
 import tech.alexberbo.berboapp.model.HttpResponse;
 import tech.alexberbo.berboapp.model.Invoice;
+import tech.alexberbo.berboapp.report.InvoiceReport;
 import tech.alexberbo.berboapp.service.CustomerService;
 import tech.alexberbo.berboapp.service.InvoiceService;
 import tech.alexberbo.berboapp.service.UserService;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -99,5 +105,18 @@ public class InvoiceController extends ExceptionHandling {
                         .timeStamp(now().toString())
                         .build()
         );
+    }
+
+    @GetMapping("/download/report")
+    ResponseEntity<Resource> getInvoice() {
+        List<Invoice> invoices = invoiceService.getAll();
+        InvoiceReport report = new InvoiceReport(invoices);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("File-name", "invoice-report.xlsx");
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment;File-name=invoice-report.xlsx");
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
+                .headers(headers)
+                .body(report.export());
     }
 }

@@ -21,7 +21,7 @@ public interface UserRepository<T extends User> {
     User verifyCode(String email, String code) throws CodeExpiredException;
     void resetPassword(String email) throws EmailDoesNotExistException;
     User verifyVerificationURL(String code) throws PasswordResetCodeExpiredException;
-    void renewPassword(String url, String password, String confirmPassword);
+    void resetPassword(Long userId, String newPassword, String confirmNewPassword);
     User verifyAccount(String key);
     T updateUserData(UpdateForm user);
     void updatePassword(Long id, String currentPassword, String newPassword, String confirmPassword);

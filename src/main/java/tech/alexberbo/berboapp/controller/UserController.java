@@ -11,7 +11,6 @@ import tech.alexberbo.berboapp.dto.UserDTO;
 import tech.alexberbo.berboapp.exception.EmailExistsException;
 import tech.alexberbo.berboapp.exception.ExceptionHandling;
 import tech.alexberbo.berboapp.form.LoginForm;
-import tech.alexberbo.berboapp.form.UpdateForm;
 import tech.alexberbo.berboapp.model.HttpResponse;
 import tech.alexberbo.berboapp.model.User;
 import tech.alexberbo.berboapp.model.UserPrincipal;
@@ -23,7 +22,6 @@ import tech.alexberbo.berboapp.service.UserService;
 
 import java.net.URI;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static java.time.LocalDateTime.now;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -67,14 +65,14 @@ public class UserController extends ExceptionHandling {
      */
     @PostMapping(path = "/register")
     public ResponseEntity<HttpResponse> register(@RequestBody @Valid User user) throws EmailExistsException {
-        UserDTO userDTO = userService.createUser(user);
+        UserDTO userDTO = userService.register(user);
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
                         .status(CREATED)
                         .statusCode(CREATED.value())
                         .timeStamp(now().toString())
                         .reason(CREATED.getReasonPhrase())
-                        .message("User successfully registered")
+                        .message(String.format("You have successfully registered %s", user.getFirstName()))
                         .developerMessage("You made it bro")
                         .data(Map.of("user", userDTO))
                         .build());

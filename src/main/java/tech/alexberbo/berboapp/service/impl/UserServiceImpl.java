@@ -27,7 +27,7 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository<Role> roleRepository;
 
     @Override
-    public UserDTO createUser(User user) throws EmailExistsException {
+    public UserDTO register(User user) throws EmailExistsException {
         return mapToUserDTO(userRepository.register(user));
     }
     @Override
@@ -56,8 +56,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void renewPassword(String url, String password, String confirmPassword) {
-        userRepository.renewPassword(url, password, confirmPassword);
+    public void resetPassword(Long userId, String newPassword, String confirmNewPassword) {
+        userRepository.resetPassword(userId, newPassword, confirmNewPassword);
     }
 
     @Override

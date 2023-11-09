@@ -23,7 +23,6 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 @NoArgsConstructor
 @JsonInclude(Include.NON_DEFAULT)
 public class User {
-    @NotNull(message = "Id cannot be null or empty!")
     private Long id;
     @NotEmpty(message = "First Name cannot be empty!")
     private String firstName;

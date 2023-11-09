@@ -12,6 +12,7 @@ import tech.alexberbo.berboapp.repository.InvoiceRepository;
 import tech.alexberbo.berboapp.service.InvoiceService;
 
 import java.util.Date;
+import java.util.List;
 
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.springframework.data.domain.PageRequest.of;
@@ -47,5 +48,10 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public Invoice getInvoice(Long id) {
         return invoiceRepository.findById(id).get();
+    }
+
+    @Override
+    public List<Invoice> getAll() {
+        return invoiceRepository.findAll();
     }
 }

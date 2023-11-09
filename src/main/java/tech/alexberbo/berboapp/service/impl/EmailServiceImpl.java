@@ -7,6 +7,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import tech.alexberbo.berboapp.enumerator.VerificationType;
+import tech.alexberbo.berboapp.exception.ApiException;
 import tech.alexberbo.berboapp.model.Message;
 import tech.alexberbo.berboapp.service.EmailService;
 
@@ -79,18 +81,26 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void sendVerifyAccountEmail(String email, String firstName, String verificationUrl) {
+    public void sendVerifyEmail(String email, String firstName, String verificationUrl, VerificationType verificationType) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, UTF_8);
             helper.setSubject(SUBJECT_ACCOUNT_VERIFICATION);
             helper.setTo(email);
-            helper.setText("Hello " + firstName + " please verify your account by clicking this link: " + verificationUrl);
+            helper.setText(sendEmail(firstName, verificationUrl, verificationType));
             helper.setSentDate(new Date());
             mailSender.send(message);
         } catch (Exception e) {
             log.info("Error: " + e.getMessage());
             throw new CancellationException("Error, can't send Email to: " + email);
+        }
+    }
+
+    private String sendEmail(String firstName, String verificationUrl, VerificationType verificationType) {
+        switch (verificationType) {
+            case ACCOUNT -> { return "Hello " + firstName + ". Your account has been created, please verify your account by clicking this link: " + verificationUrl; }
+            case PASSWORD -> { return "Hello " + firstName + " to reset your password click this link: " + verificationUrl; }
+            default -> throw new ApiException("Unable to send email!");
         }
     }
 
