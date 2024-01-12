@@ -26,4 +26,7 @@ public interface UserQuery {
     String UPDATE_USER_ENABLED_QUERY = "UPDATE Users SET enabled = :enabled WHERE user_id = :userId";
     String UPDATE_USER_DATA_QUERY = "UPDATE Users SET first_name = :firstName, last_name = :lastName, email = :email, phone = :phone, title = :title, bio = :bio, address = :address WHERE user_id = :id";
     String SELECT_USER_BY_ID_QUERY = "SELECT * FROM Users WHERE user_id = :id";
+    String UPDATE_PASSWORD_QUERY = "UPDATE Users SET password = :password where user_id = :userId";
+    String UPDATE_USER_SETTINGS_QUERY = "UPDATE Users SET enabled = :enabled, non_locked = :notLocked WHERE user_id = :userId";
+    String UPDATE_USER_MFA_QUERY = "UPDATE Users SET using_mfa = :isUsingMfa WHERE email = :email";
 }

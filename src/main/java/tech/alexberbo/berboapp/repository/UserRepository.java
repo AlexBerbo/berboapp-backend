@@ -23,4 +23,7 @@ public interface UserRepository<T extends User> {
     void renewPassword(String url, String password, String confirmPassword);
     User verifyAccount(String key);
     T updateUserData(UpdateForm user);
+    void updatePassword(Long id, String currentPassword, String newPassword, String confirmPassword);
+    void updateSettings(Long userId, Boolean enabled, Boolean notLocked);
+    User updateMfa(String email);
 }

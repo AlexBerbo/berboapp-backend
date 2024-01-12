@@ -16,7 +16,6 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class Role {
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Long id;
     private String name;
     private String permissions;

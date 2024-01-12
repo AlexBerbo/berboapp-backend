@@ -44,14 +44,17 @@ public class ExceptionHandling extends ResponseEntityExceptionHandler implements
     }
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode statusCode, WebRequest request) {
-        List<FieldError> fieldErrors = ex.getFieldErrors();
+        log.error(ex.getMessage());
+        List<FieldError> fieldErrors = ex.getBindingResult().getFieldErrors();
         String fieldMessage = fieldErrors.stream().map(FieldError::getDefaultMessage).collect(Collectors.joining(", "));
-        return new ResponseEntity<>(HttpResponse.builder()
+        return new ResponseEntity<>(
+                HttpResponse.builder()
                 .status(resolve(statusCode.value()))
                 .statusCode(statusCode.value())
+                .timeStamp(LocalDateTime.now().toString())
                 .message(fieldMessage)
                 .developerMessage(ex.getMessage())
-                .timeStamp(LocalDateTime.now().toString()), statusCode);
+                .build(), statusCode);
     }
     @ExceptionHandler(SQLIntegrityConstraintViolationException.class)
     public ResponseEntity<HttpResponse> sQLIntegrityConstraintViolationException(SQLIntegrityConstraintViolationException e) {
