@@ -7,6 +7,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -41,8 +42,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
+        http.cors(Customizer.withDefaults());
         http.sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(STATELESS));
         http.authorizeHttpRequests(matcher -> matcher.requestMatchers(PUBLIC_URLS).permitAll());
+        http.authorizeHttpRequests(matcher -> matcher.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll());
         http.authorizeHttpRequests(matcher -> matcher.requestMatchers(HttpMethod.DELETE, "/user/delete/**").hasAnyAuthority("DELETE:USER"));
         http.authorizeHttpRequests(matcher -> matcher.requestMatchers(HttpMethod.DELETE, "/customer/delete/**").hasAnyAuthority("DELETE:CUSTOMER"));
         http.exceptionHandling( e -> e.accessDeniedHandler(customAccessDeniedHandler).authenticationEntryPoint(customAuthenticationEntryPoint));

@@ -1,5 +1,7 @@
 package tech.alexberbo.berboapp.constant.query;
 
+import org.springframework.jdbc.core.PreparedStatementCreator;
+
 /**
  Queries that are executed in the Repository implementation package and classes
  */
