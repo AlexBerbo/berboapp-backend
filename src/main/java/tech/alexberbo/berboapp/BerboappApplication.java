@@ -12,7 +12,6 @@ import java.util.Arrays;
 
 @SpringBootApplication//(exclude = {SecurityAutoConfiguration.class})
 public class BerboappApplication {
-
 	public static void main(String[] args) {
 		SpringApplication.run(BerboappApplication.class, args);
 	}
@@ -20,7 +19,6 @@ public class BerboappApplication {
 	public BCryptPasswordEncoder encoder() {
 		return new BCryptPasswordEncoder();
 	}
-
 	@Bean
 	public CorsFilter corsFilter() { // Cors filter, so cors does not interrupt with all of our methods
 		CorsConfiguration corsConfiguration = new CorsConfiguration();

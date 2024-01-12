@@ -20,6 +20,7 @@ import tech.alexberbo.berboapp.service.UserService;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static io.micrometer.common.util.StringUtils.isNotEmpty;
@@ -52,7 +53,7 @@ public class JWTProvider {
                 .withIssuer(ALEXBERBO)
                 .withAudience(ALEXBERBO_MANAGEMENT)
                 .withIssuedAt(new Date())
-                .withSubject(userPrincipal.getUsername()).withArrayClaim(AUTHORITIES, getUserPermission(userPrincipal))
+                .withSubject(String.valueOf(userPrincipal.getUser().getId())).withArrayClaim(AUTHORITIES, getUserPermission(userPrincipal))
                 .withExpiresAt(new Date(currentTimeMillis() + TOKEN_EXPIRATION_DATE))
                 .sign(Algorithm.HMAC512(secret.getBytes()));
     }
@@ -66,7 +67,7 @@ public class JWTProvider {
                 .withIssuer(ALEXBERBO)
                 .withAudience(ALEXBERBO_MANAGEMENT)
                 .withIssuedAt(new Date())
-                .withSubject(userPrincipal.getUsername())
+                .withSubject(String.valueOf(userPrincipal.getUser().getId()))
                 .withExpiresAt(new Date(currentTimeMillis() + REFRESH_TOKEN_EXPIRATION_DATE))
                 .sign(Algorithm.HMAC512(secret.getBytes()));
     }
@@ -75,8 +76,8 @@ public class JWTProvider {
         What this is doing: Setting the user authenticated after user's token has been verified.
         Passing the info to Spring so the can log in and access the app.
      */
-    public Authentication getAuthentication(String email, List<GrantedAuthority> authorities, HttpServletRequest request) {
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userService.getUserByEmail(email), null, authorities);
+    public Authentication getAuthentication(Long userId, List<GrantedAuthority> authorities, HttpServletRequest request) {
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userService.getUserById(userId), null, authorities);
         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         return authenticationToken;
     }
@@ -94,9 +95,9 @@ public class JWTProvider {
     /**
         Getting the user's email that we will set in the AuthorizationFilter class.
      */
-    public String getSubject(String token, HttpServletRequest request) {
+    public Long getSubject(String token, HttpServletRequest request) {
         try {
-            return getJwtVerifier().verify(token).getSubject();
+            return Long.valueOf(getJwtVerifier().verify(token).getSubject());
         } catch (TokenExpiredException e) {
             request.setAttribute("tokenExpired", e.getMessage());
             throw e;
@@ -108,9 +109,9 @@ public class JWTProvider {
         }
     }
 
-    public boolean isTokenValid(String token, String email) {
+    public boolean isTokenValid(String token, Long userId) {
         JWTVerifier verifier = getJwtVerifier();
-        return !email.isEmpty() || isNotEmpty(email) && !isTokenExpired(verifier, token);
+        return !Objects.isNull(userId) && !isTokenExpired(verifier, token);
     }
 
     private boolean isTokenExpired(JWTVerifier verifier, String token) {

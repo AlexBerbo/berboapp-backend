@@ -10,6 +10,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.alexberbo.berboapp.dto.UserDTO;
 import tech.alexberbo.berboapp.exception.*;
 import tech.alexberbo.berboapp.form.LoginForm;
+import tech.alexberbo.berboapp.form.UpdateForm;
 import tech.alexberbo.berboapp.model.HttpResponse;
 import tech.alexberbo.berboapp.model.User;
 import tech.alexberbo.berboapp.model.UserPrincipal;
@@ -20,6 +21,7 @@ import tech.alexberbo.berboapp.service.UserService;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static java.time.LocalDateTime.now;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -95,6 +97,25 @@ public class UserController extends ExceptionHandling {
     }
 
     /**
+     * Here the user is being updated and its data changed when the user sends a request for it
+     */
+    @PatchMapping("/update")
+    public ResponseEntity<HttpResponse> updateUser(@RequestBody @Valid UpdateForm user) throws InterruptedException {
+        TimeUnit.SECONDS.sleep(1);
+        UserDTO updatedUser = userService.updateUser(user);
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .timeStamp(now().toString())
+                        .reason(OK.getReasonPhrase())
+                        .message("User updated!")
+                        .developerMessage("Ez")
+                        .data(Map.of("user", user))
+                        .build());
+    }
+
+    /**
         As the method name says, this method checks if the code that the email that sends the verification code is valid.
         If the code is good, user will get the access and refresh token so the user can access the protected urls.
      */
@@ -123,7 +144,7 @@ public class UserController extends ExceptionHandling {
     public ResponseEntity<HttpResponse> refreshToken(HttpServletRequest request) {
         if(isHeaderAndTokenValid(request)) {
             String token = request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length());
-            UserDTO user = userService.getUserByEmail(jwtProvider.getSubject(token, request));
+            UserDTO user = userService.getUserById(jwtProvider.getSubject(token, request));
             return ResponseEntity.ok().body(
                     HttpResponse.builder()
                             .status(OK)
@@ -241,10 +262,10 @@ public class UserController extends ExceptionHandling {
      */
     private boolean isHeaderAndTokenValid(HttpServletRequest request) {
         String token = request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length());
-        String email = jwtProvider.getSubject(token, request);
+        Long userId = jwtProvider.getSubject(token, request);
         return request.getHeader(AUTHORIZATION) != null
                 && request.getHeader(AUTHORIZATION).startsWith(TOKEN_PREFIX)
-                && jwtProvider.isTokenValid(token, email);
+                && jwtProvider.isTokenValid(token, userId);
     }
 
     /**

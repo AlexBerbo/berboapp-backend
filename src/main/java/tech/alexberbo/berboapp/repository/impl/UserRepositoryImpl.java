@@ -18,6 +18,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.alexberbo.berboapp.dto.UserDTO;
 import tech.alexberbo.berboapp.enumerator.VerificationType;
 import tech.alexberbo.berboapp.exception.*;
+import tech.alexberbo.berboapp.form.UpdateForm;
 import tech.alexberbo.berboapp.model.Role;
 import tech.alexberbo.berboapp.model.User;
 import tech.alexberbo.berboapp.model.UserPrincipal;
@@ -108,14 +109,19 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
         return null;
     }
 
+    /**
+     * Get the user by id, very useful for manipulating the user
+     * Used in the JWT provider, and it will be used when passing requests from the client
+     */
     @Override
     public User getUser(Long id) {
-        return null;
-    }
-
-    @Override
-    public User updateUser(User data) {
-        return null;
+        try {
+            return jdbc.queryForObject(SELECT_USER_BY_ID_QUERY, Map.of("id", id), new UserRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            throw new ApiException("No user found with id: " + id);
+        } catch (Exception e) {
+            throw new ApiException("An Error occurred");
+        }
     }
 
     @Override
@@ -261,6 +267,20 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
     }
 
     /**
+     *  Used to update the user data, this is very useful when a user wants to change data on his profile
+     */
+    @Override
+    public User updateUserData(UpdateForm user) {
+        try {
+            jdbc.update(UPDATE_USER_DATA_QUERY, updateUserDataSqlParameterSource(user));
+            return getUser(user.getId());
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new ApiException("An error occurred please try again!");
+        }
+    }
+
+    /**
         Returns true if the statement is true with the url that has been passed on in the method
      */
     private Boolean isURLExpired(String url) {
@@ -310,6 +330,17 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
                 .addValue("email", user.getEmail())
                 .addValue("password", encoder.encode(user.getPassword()));
                 //.addValue("enabled", 1);
+    }
+    private SqlParameterSource updateUserDataSqlParameterSource(UpdateForm user) {
+        return new MapSqlParameterSource()
+                .addValue("id", user.getId())
+                .addValue("firstName", user.getFirstName())
+                .addValue("lastName", user.getLastName())
+                .addValue("email", user.getEmail())
+                .addValue("phone", user.getPhone())
+                .addValue("title", user.getTitle())
+                .addValue("bio", user.getBio())
+                .addValue("address", user.getAddress());
     }
 
     /**

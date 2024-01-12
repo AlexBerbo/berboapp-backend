@@ -5,6 +5,7 @@ import tech.alexberbo.berboapp.exception.CodeExpiredException;
 import tech.alexberbo.berboapp.exception.EmailDoesNotExistException;
 import tech.alexberbo.berboapp.exception.EmailExistsException;
 import tech.alexberbo.berboapp.exception.PasswordResetCodeExpiredException;
+import tech.alexberbo.berboapp.form.UpdateForm;
 import tech.alexberbo.berboapp.model.User;
 
 public interface UserService {
@@ -16,4 +17,6 @@ public interface UserService {
     UserDTO verifyVerificationURL(String code) throws PasswordResetCodeExpiredException;
     void renewPassword(String url, String password, String confirmPassword);
     UserDTO verifyAccount(String key);
+    UserDTO updateUser(UpdateForm user);
+    UserDTO getUserById(Long userId);
 }

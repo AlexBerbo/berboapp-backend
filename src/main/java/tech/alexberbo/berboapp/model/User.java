@@ -2,16 +2,17 @@ package tech.alexberbo.berboapp.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotEmpty;
 import java.time.LocalDateTime;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.*;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
     User class object.
@@ -22,7 +23,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.*;
 @NoArgsConstructor
 @JsonInclude(Include.NON_DEFAULT)
 public class User {
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @NotNull(message = "Id cannot be null or empty!")
     private Long id;
     @NotEmpty(message = "First Name cannot be empty!")
     private String firstName;
