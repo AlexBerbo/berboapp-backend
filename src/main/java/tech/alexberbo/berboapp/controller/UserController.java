@@ -6,33 +6,28 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.alexberbo.berboapp.dto.UserDTO;
-import tech.alexberbo.berboapp.exception.*;
+import tech.alexberbo.berboapp.exception.EmailExistsException;
+import tech.alexberbo.berboapp.exception.ExceptionHandling;
 import tech.alexberbo.berboapp.form.LoginForm;
-import tech.alexberbo.berboapp.form.SettingsForm;
 import tech.alexberbo.berboapp.form.UpdateForm;
-import tech.alexberbo.berboapp.form.UpdatePasswordForm;
 import tech.alexberbo.berboapp.model.HttpResponse;
 import tech.alexberbo.berboapp.model.User;
 import tech.alexberbo.berboapp.model.UserPrincipal;
 import tech.alexberbo.berboapp.provider.JWTProvider;
 import tech.alexberbo.berboapp.service.AuthService;
+import tech.alexberbo.berboapp.service.EventService;
 import tech.alexberbo.berboapp.service.RoleService;
 import tech.alexberbo.berboapp.service.UserService;
 
-import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static java.time.LocalDateTime.now;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.*;
-import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
 import static tech.alexberbo.berboapp.constant.security.SecurityConstants.TOKEN_PREFIX;
 import static tech.alexberbo.berboapp.dtomapper.UserDTOMapper.toUser;
 import static tech.alexberbo.berboapp.util.UserUtil.getAuthenticatedUser;
@@ -49,6 +44,7 @@ import static tech.alexberbo.berboapp.util.UserUtil.getAuthenticatedUser;
 public class UserController extends ExceptionHandling {
     private final UserService userService;
     private final AuthService authService;
+    private final EventService eventService;
     private final JWTProvider jwtProvider;
     private final RoleService roleService;
 
@@ -60,8 +56,7 @@ public class UserController extends ExceptionHandling {
      */
     @PostMapping(path = "/login")
     public ResponseEntity<HttpResponse> login(@RequestBody @Valid LoginForm loginForm) {
-        Authentication authentication = authService.authenticate(loginForm.getEmail(), loginForm.getPassword());
-        UserDTO user = authService.getAuthenticatedUser(authentication);
+        UserDTO user = authService.authenticate(loginForm.getEmail(), loginForm.getPassword());
         return user.isUsingMfa() ? sendVerificationCode(user) : sendResponse(user);
     }
 
@@ -90,7 +85,6 @@ public class UserController extends ExceptionHandling {
       */
     @GetMapping(path = "/profile")
     public ResponseEntity<HttpResponse> profile(Authentication authentication) {
-        // TODO FIX ERROR
         UserDTO user = userService.getUserByEmail(getAuthenticatedUser(authentication).getEmail());
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
@@ -100,47 +94,9 @@ public class UserController extends ExceptionHandling {
                         .reason(OK.getReasonPhrase())
                         .message("Profile Retrieved")
                         .developerMessage("You made it bro!")
-                        .data(Map.of("user", user, "roles", roleService.getAllRoles()))
-                        .build());
-    }
-
-    /**
-     * Here the user is being updated and its data changed when the user sends a request for it
-     */
-    @PatchMapping("/update")
-    public ResponseEntity<HttpResponse> updateUser(@RequestBody @Valid UpdateForm user) throws InterruptedException {
-        TimeUnit.SECONDS.sleep(1);
-        UserDTO updatedUser = userService.updateUser(user);
-        return ResponseEntity.ok().body(
-                HttpResponse.builder()
-                        .status(OK)
-                        .statusCode(OK.value())
-                        .timeStamp(now().toString())
-                        .reason(OK.getReasonPhrase())
-                        .message("User updated!")
-                        .developerMessage("Ez")
-                        .data(Map.of("user", userService.getUserById(updatedUser.getId()), "roles", roleService.getAllRoles()))
-                        .build());
-    }
-
-    /**
-        As the method name says, this method checks if the code that the email that sends the verification code is valid.
-        If the code is good, user will get the access and refresh token so the user can access the protected urls.
-     */
-    @GetMapping(path = "/verify/code/{email}/{code}")
-    public ResponseEntity<HttpResponse> verifyCode(@PathVariable("email") String email, @PathVariable("code") String code) throws CodeExpiredException {
-        UserDTO user = userService.verifyCode(email, code);
-        return ResponseEntity.ok().body(
-                HttpResponse.builder()
-                        .status(OK)
-                        .statusCode(OK.value())
-                        .timeStamp(now().toString())
-                        .reason(OK.getReasonPhrase())
-                        .message("Login successful")
-                        .developerMessage("You made it bro")
                         .data(Map.of("user", user,
-                                "jwt_token", jwtProvider.createAccessToken(getUserPrincipal(user)),
-                                "refresh_token", jwtProvider.createRefreshAccessToken(getUserPrincipal(user))))
+                                "events", eventService.getUserEventsByUserId(user.getId()),
+                                "roles", roleService.getAllRoles()))
                         .build());
     }
 
@@ -176,173 +132,6 @@ public class UserController extends ExceptionHandling {
                             .developerMessage("Refresh Token not valid")
                             .build());
         }
-    }
-
-    /**
-        Here we are verifying the account when the user registers on to the app.
-        An email is sent to the user, and then when he gets this URL he confirms his account.
-        If already confirmed, nothing will happen, user will just get a message that he is already confirmed and free to loginn.
-     */
-    @GetMapping(path = "/verify/account/{key}")
-    public ResponseEntity<HttpResponse> verifyAccount(@PathVariable("key") String key) {
-        return ResponseEntity.ok().body(
-                HttpResponse.builder()
-                        .status(OK)
-                        .statusCode(OK.value())
-                        .timeStamp(now().toString())
-                        .reason(OK.getReasonPhrase())
-                        .message(userService.verifyAccount(key).isEnabled() ? "Account already verified" : "Account verified")
-                        .developerMessage("You made it bro")
-                        .build());
-    }
-
-    // START - Password Reset
-    /**
-        This sends an email to the user with a link that will lead him to the reset password functionality.
-     */
-    @GetMapping("/reset-password/{email}")
-    public ResponseEntity<HttpResponse> resetPassword(@PathVariable("email") String email) throws EmailDoesNotExistException {
-        userService.resetPassword(email);
-        return ResponseEntity.ok().body(
-                HttpResponse.builder()
-                        .status(OK)
-                        .statusCode(OK.value())
-                        .message("Email for password recovery has been sent to: " + email)
-                        .timeStamp(now().toString())
-                        .build()
-        );
-    }
-
-    /**
-        After getting this link and clicking on it, the user will be redirected to the reset password page,
-        but only if the key of the url is valid, checks are done in the UserRepository implementation.
-     */
-    @GetMapping("/verify/password/{url}")
-    public ResponseEntity<HttpResponse> verifyVerificationURL(@PathVariable("url") String url) throws PasswordResetCodeExpiredException {
-        UserDTO user = userService.verifyVerificationURL(url);
-        return ResponseEntity.ok().body(
-                HttpResponse.builder()
-                        .status(OK)
-                        .statusCode(OK.value())
-                        .message("Enter new Password")
-                        .data(Map.of("user", user))
-                        .timeStamp(now().toString())
-                        .build()
-        );
-    }
-
-    /**
-        Reset password post method, gets the new password twice, and checks for its equality,
-        other checks and logic is done in the User Repository implementation
-     */
-    @PostMapping("/reset-password")
-    public ResponseEntity<HttpResponse> renewPassword(@RequestParam("password") String password,
-                                                      @RequestParam("confirmPassword") String confirmPassword,
-                                                      @RequestParam("url") String url) throws PasswordResetCodeExpiredException {
-        userService.renewPassword(url, password, confirmPassword);
-        return ResponseEntity.ok().body(
-                HttpResponse.builder()
-                        .status(OK)
-                        .statusCode(OK.value())
-                        .message("Password reset successfully")
-                        .timeStamp(now().toString())
-                        .build()
-        );
-    }
-
-    @PatchMapping("/update-password")
-    public ResponseEntity<HttpResponse> updatePassword(Authentication authentication, @RequestBody @Valid UpdatePasswordForm form) {
-        UserDTO user = getAuthenticatedUser(authentication);
-        userService.updatePassword(user.getId(), form.getCurrentPassword(), form.getNewPassword(), form.getConfirmPassword());
-        return ResponseEntity.ok().body(
-                HttpResponse.builder().status(OK)
-                        .statusCode(OK.value())
-                        .message("Password updated successfully!")
-                        .timeStamp(now().toString())
-                        .build()
-        );
-    }
-    // END - Password Reset
-
-    @PatchMapping("/update-role/{roleName}")
-    public ResponseEntity<HttpResponse> updateRole(Authentication authentication, @PathVariable("roleName") String roleName) {
-        UserDTO user = getAuthenticatedUser(authentication);
-        userService.updateRole(user.getId(), roleName);
-        return ResponseEntity.ok().body(
-                HttpResponse.builder().status(OK)
-                        .statusCode(OK.value())
-                        .message("Role updated successfully!")
-                        .data(Map.of("user", userService.getUserById(user.getId()), "roles", roleService.getAllRoles()))
-                        .timeStamp(now().toString())
-                        .build()
-        );
-    }
-
-    @PatchMapping("/update-settings")
-    public ResponseEntity<HttpResponse> updateRole(Authentication authentication, @RequestBody @Valid SettingsForm form) {
-        UserDTO user = getAuthenticatedUser(authentication);
-        userService.updateSettings(user.getId(), form.getEnabled(), form.getNotLocked());
-        return ResponseEntity.ok().body(
-                HttpResponse.builder().status(OK)
-                        .statusCode(OK.value())
-                        .message("Account settings updated successfully!")
-                        .data(Map.of("user", userService.getUserById(user.getId()), "roles", roleService.getAllRoles()))
-                        .timeStamp(now().toString())
-                        .build()
-        );
-    }
-
-    @PatchMapping("/update-mfa")
-    public ResponseEntity<HttpResponse> updateRole(Authentication authentication) throws InterruptedException {
-        TimeUnit.SECONDS.sleep(1);
-        UserDTO user = userService.updateMfa(getAuthenticatedUser(authentication).getEmail());
-        return ResponseEntity.ok().body(
-                HttpResponse.builder().status(OK)
-                        .statusCode(OK.value())
-                        .message("MFA updated successfully!")
-                        .data(Map.of("user", user, "roles", roleService.getAllRoles()))
-                        .timeStamp(now().toString())
-                        .build()
-        );
-    }
-
-    /**
-     * Backend call to the endpoint for updating the user's profile picture
-     * Image is passed as a request parameter from the client as form data,
-     * then it is being processed in the repository implementation class
-     * */
-    @PatchMapping("/update-image")
-    public ResponseEntity<HttpResponse> updateImage(Authentication authentication, @RequestParam("image") MultipartFile image) {
-        UserDTO user = getAuthenticatedUser(authentication);
-        userService.updateImage(user, image);
-        return ResponseEntity.ok().body(
-                HttpResponse.builder().status(OK)
-                        .statusCode(OK.value())
-                        .message("Profile image updated successfully!")
-                        .data(Map.of("user", userService.getUserById(user.getId()), "roles", roleService.getAllRoles()))
-                        .timeStamp(now().toString())
-                        .build()
-        );
-    }
-
-    @GetMapping(value = "/image/{fileName}", produces = IMAGE_PNG_VALUE)
-    public byte[] getImage(@PathVariable("fileName") String fileName) throws IOException {
-        return Files.readAllBytes(Paths.get(System.getProperty("user.home") + ("/berbogram/images/"+ fileName)));
-    }
-
-
-    /**
-        Presenting a white label error page when a user enters an url that does not exist.
-     */
-    @RequestMapping("/error")
-    public ResponseEntity<HttpResponse> handleErrorPage(HttpServletRequest request) {
-        return ResponseEntity.badRequest().body(
-                HttpResponse.builder()
-                        .status(BAD_REQUEST)
-                        .statusCode(BAD_REQUEST.value())
-                        .message("There is no mapping for " + request.getMethod() + " request on this url")
-                        .build()
-        );
     }
 
     /**
