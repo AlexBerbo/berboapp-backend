@@ -1,5 +1,6 @@
 package tech.alexberbo.berboapp.service;
 
+import org.springframework.web.multipart.MultipartFile;
 import tech.alexberbo.berboapp.dto.UserDTO;
 import tech.alexberbo.berboapp.exception.CodeExpiredException;
 import tech.alexberbo.berboapp.exception.EmailDoesNotExistException;
@@ -23,4 +24,5 @@ public interface UserService {
     void updateRole(Long userId, String roleName);
     void updateSettings(Long userId, Boolean enabled, Boolean notLocked);
     UserDTO updateMfa(String email);
+    void updateImage(UserDTO user, MultipartFile image);
 }

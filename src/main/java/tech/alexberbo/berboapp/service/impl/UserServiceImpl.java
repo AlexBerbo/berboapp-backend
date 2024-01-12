@@ -2,6 +2,7 @@ package tech.alexberbo.berboapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import tech.alexberbo.berboapp.dto.UserDTO;
 import tech.alexberbo.berboapp.exception.CodeExpiredException;
 import tech.alexberbo.berboapp.exception.EmailDoesNotExistException;
@@ -77,6 +78,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO updateMfa(String email) {
         return mapToUserDTO(userRepository.updateMfa(email));
+    }
+
+    @Override
+    public void updateImage(UserDTO user, MultipartFile image) {
+        userRepository.updateImage(user, image);
     }
 
     @Override

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.alexberbo.berboapp.dto.UserDTO;
 import tech.alexberbo.berboapp.exception.*;
@@ -21,13 +22,17 @@ import tech.alexberbo.berboapp.service.AuthService;
 import tech.alexberbo.berboapp.service.RoleService;
 import tech.alexberbo.berboapp.service.UserService;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static java.time.LocalDateTime.now;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
 import static tech.alexberbo.berboapp.constant.security.SecurityConstants.TOKEN_PREFIX;
 import static tech.alexberbo.berboapp.dtomapper.UserDTOMapper.toUser;
 import static tech.alexberbo.berboapp.util.UserUtil.getAuthenticatedUser;
@@ -114,7 +119,7 @@ public class UserController extends ExceptionHandling {
                         .reason(OK.getReasonPhrase())
                         .message("User updated!")
                         .developerMessage("Ez")
-                        .data(Map.of("user", user))
+                        .data(Map.of("user", userService.getUserById(updatedUser.getId()), "roles", roleService.getAllRoles()))
                         .build());
     }
 
@@ -300,6 +305,31 @@ public class UserController extends ExceptionHandling {
                         .build()
         );
     }
+
+    /**
+     * Backend call to the endpoint for updating the user's profile picture
+     * Image is passed as a request parameter from the client as form data,
+     * then it is being processed in the repository implementation class
+     * */
+    @PatchMapping("/update-image")
+    public ResponseEntity<HttpResponse> updateImage(Authentication authentication, @RequestParam("image") MultipartFile image) {
+        UserDTO user = getAuthenticatedUser(authentication);
+        userService.updateImage(user, image);
+        return ResponseEntity.ok().body(
+                HttpResponse.builder().status(OK)
+                        .statusCode(OK.value())
+                        .message("Profile image updated successfully!")
+                        .data(Map.of("user", userService.getUserById(user.getId()), "roles", roleService.getAllRoles()))
+                        .timeStamp(now().toString())
+                        .build()
+        );
+    }
+
+    @GetMapping(value = "/image/{fileName}", produces = IMAGE_PNG_VALUE)
+    public byte[] getImage(@PathVariable("fileName") String fileName) throws IOException {
+        return Files.readAllBytes(Paths.get(System.getProperty("user.home") + ("/berbogram/images/"+ fileName)));
+    }
+
 
     /**
         Presenting a white label error page when a user enters an url that does not exist.

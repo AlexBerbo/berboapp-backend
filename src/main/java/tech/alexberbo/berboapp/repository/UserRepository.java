@@ -1,5 +1,6 @@
 package tech.alexberbo.berboapp.repository;
 
+import org.springframework.web.multipart.MultipartFile;
 import tech.alexberbo.berboapp.dto.UserDTO;
 import tech.alexberbo.berboapp.exception.CodeExpiredException;
 import tech.alexberbo.berboapp.exception.EmailDoesNotExistException;
@@ -26,4 +27,5 @@ public interface UserRepository<T extends User> {
     void updatePassword(Long id, String currentPassword, String newPassword, String confirmPassword);
     void updateSettings(Long userId, Boolean enabled, Boolean notLocked);
     User updateMfa(String email);
+    void updateImage(UserDTO user, MultipartFile image);
 }

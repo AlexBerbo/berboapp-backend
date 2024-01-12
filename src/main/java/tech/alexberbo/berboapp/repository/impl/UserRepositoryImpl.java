@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.alexberbo.berboapp.dto.UserDTO;
 import tech.alexberbo.berboapp.enumerator.VerificationType;
@@ -27,8 +28,13 @@ import tech.alexberbo.berboapp.repository.UserRepository;
 import tech.alexberbo.berboapp.rowmapper.UserRowMapper;
 import tech.alexberbo.berboapp.service.EmailService;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang3.time.DateUtils.addDays;
 import static tech.alexberbo.berboapp.constant.exception.ExceptionConstants.*;
@@ -280,6 +286,11 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
         }
     }
 
+    /**
+     * Update user password method when the user has access to his account
+     * New password data is being passed from the client as request body and processed here with a check:
+     * If the new and the confirmed passwords are identical and if the current password is the same as the current password that has been passed in the client
+     * */
     @Override
     public void updatePassword(Long id, String currentPassword, String newPassword, String confirmPassword) {
         if(!newPassword.equals(confirmPassword)) { throw new ApiException("Passwords do not match!"); }
@@ -297,6 +308,9 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
         }
     }
 
+    /**
+     * Simple update of users account setting/status
+     * */
     @Override
     public void updateSettings(Long userId, Boolean enabled, Boolean notLocked) {
         try {
@@ -307,6 +321,9 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
         }
     }
 
+    /**
+     * Toggling user's MFA with a simple Sql update query and a change in the Users original object
+     * */
     @Override
     public User updateMfa(String email) {
         User user = getUserByEmail(email);
@@ -319,6 +336,50 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
             log.info(e.getMessage());
             throw new ApiException("Could not update MFA!");
         }
+    }
+
+    /**
+     * Method to process and save the image coming from the client side.
+     * */
+    @Override
+    public void updateImage(UserDTO user, MultipartFile image) {
+        String imageUrl = setImageUrl(user.getEmail());
+        saveImage(user.getEmail(), image);
+        jdbc.update(UPDATE_USER_IMAGE_QUERY, Map.of("userId", user.getId(), "imageUrl", imageUrl));
+    }
+
+    /**
+     * Pattern for: Creating a directory for user's profile images, and saving those images there.
+     * Using the Path interface to set a path for the photo
+     * If the path does not exist we create one
+     * Then we copy the image bytes into the path, and replace existing image if there is one.
+     * The image is stored on this device, and the url that is stored in the DB has access to this image
+     *  */
+    private void saveImage(String email, MultipartFile image) {
+        Path path = Paths.get(System.getProperty("user.home") + "/berbogram/images").toAbsolutePath().normalize();
+        if(!Files.exists(path)) {
+            try {
+                Files.createDirectories(path);
+            } catch (IOException e) {
+                log.error(e.getMessage());
+                throw new RuntimeException("Could not create a directory for updating the image!");
+            }
+            log.info("Directory created! {}", path);
+        }
+        try {
+            Files.copy(image.getInputStream(), path.resolve(email + ".png"), REPLACE_EXISTING);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new ApiException("Could not create a directory for updating the image!");
+        }
+        log.info("File saved in {}", path);
+    }
+
+    /**
+     * Setting the image URL to be saved in the database
+     * */
+    private String setImageUrl(String email) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/image/" + email + ".png").toUriString();
     }
 
     /**
@@ -372,6 +433,11 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
                 .addValue("password", encoder.encode(user.getPassword()));
                 //.addValue("enabled", 1);
     }
+
+    /**
+     These are the parameters that are passed into the updateUser method as a form from the frontend.
+     The required information for updating the user info.
+     */
     private SqlParameterSource updateUserDataSqlParameterSource(UpdateForm user) {
         return new MapSqlParameterSource()
                 .addValue("id", user.getId())
