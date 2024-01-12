@@ -11,9 +11,9 @@ import org.springframework.web.filter.CorsFilter;
 import java.util.Arrays;
 
 @SpringBootApplication//(exclude = {SecurityAutoConfiguration.class})
-public class BerboappApplication {
+public class Application {
 	public static void main(String[] args) {
-		SpringApplication.run(BerboappApplication.class, args);
+		SpringApplication.run(Application.class, args);
 	}
 	@Bean
 	public BCryptPasswordEncoder encoder() {

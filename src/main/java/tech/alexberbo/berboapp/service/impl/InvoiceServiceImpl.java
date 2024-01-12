@@ -5,10 +5,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import tech.alexberbo.berboapp.mapper.InvoiceMapper;
 import tech.alexberbo.berboapp.model.Customer;
 import tech.alexberbo.berboapp.model.Invoice;
+import tech.alexberbo.berboapp.model.ServiceCustomer;
 import tech.alexberbo.berboapp.repository.CustomerRepository;
 import tech.alexberbo.berboapp.repository.InvoiceRepository;
+import tech.alexberbo.berboapp.repository.ServiceCustomerRepository;
 import tech.alexberbo.berboapp.service.InvoiceService;
 
 import java.util.Date;
@@ -24,6 +27,7 @@ import static org.springframework.data.domain.PageRequest.of;
 public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final CustomerRepository customerRepository;
+    private final ServiceCustomerRepository serviceCustomerRepository;
 
     @Override
     public Invoice createInvoice(Invoice invoice) {
@@ -38,9 +42,13 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
-    public void addInvoiceToCustomer(Long customerId, Invoice invoice) {
+    public void addInvoiceToCustomer(Long customerId, Long serviceId, Invoice invoice) {
         invoice.setInvoiceNumber(randomAlphanumeric(10).toUpperCase());
+        ServiceCustomer serviceCustomer = serviceCustomerRepository.findById(serviceId).get();
         Customer customer = customerRepository.findById(customerId).get();
+        invoice.setTotal(serviceCustomer.getPrice() + serviceCustomer.getFee());
+        invoice.setServiceCustomer(serviceCustomer);
+        invoice.setServiceName(serviceCustomer.getName());
         invoice.setCustomer(customer);
         invoiceRepository.save(invoice);
     }

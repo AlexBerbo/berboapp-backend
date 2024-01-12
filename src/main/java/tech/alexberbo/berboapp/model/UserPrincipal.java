@@ -2,19 +2,17 @@ package tech.alexberbo.berboapp.model;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 import tech.alexberbo.berboapp.dto.UserDTO;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
 
-import static java.util.Arrays.stream;
 import static tech.alexberbo.berboapp.dtomapper.UserDTOMapper.fromUser;
 
 /**
-    User Principal, this is the Spring frameworks user that is customizable.
-    This is what the Spring context takes when the user is logging in, so the User class object has to be transferred to this User Principal object
+ * User Principal, this is the Spring frameworks user that is customizable.
+ * This is what the Spring context takes when the user is logging in, so the User class object has to be transferred to this User Principal object
  */
 @RequiredArgsConstructor
 public class UserPrincipal implements UserDetails {
@@ -23,7 +21,8 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return stream(role.getPermissions().split(",".trim())).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+        //return stream(role.getPermissions().split(",".trim())).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+        return AuthorityUtils.commaSeparatedStringToAuthorityList(role.getPermissions());
     }
 
     @Override

@@ -1,6 +1,7 @@
 package tech.alexberbo.berboapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import tech.alexberbo.berboapp.dto.UserDTO;
@@ -83,6 +84,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public void updateImage(UserDTO user, MultipartFile image) {
         userRepository.updateImage(user, image);
+    }
+
+    @Override
+    public Page<UserDTO> getUsers(int page, int size) {
+        return null; //userRepository.getAllUsers(page, size);
     }
 
     @Override

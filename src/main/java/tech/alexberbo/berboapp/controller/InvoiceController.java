@@ -14,10 +14,10 @@ import tech.alexberbo.berboapp.model.Invoice;
 import tech.alexberbo.berboapp.report.InvoiceReport;
 import tech.alexberbo.berboapp.service.CustomerService;
 import tech.alexberbo.berboapp.service.InvoiceService;
+import tech.alexberbo.berboapp.service.ServiceCustomerService;
 import tech.alexberbo.berboapp.service.UserService;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,6 +33,7 @@ public class InvoiceController extends ExceptionHandling {
     private final InvoiceService invoiceService;
     private final UserService userService;
     private final CustomerService customerService;
+    private final ServiceCustomerService serviceCustomerService;
 
     @PostMapping("/create")
     ResponseEntity<HttpResponse> createInvoice(@AuthenticationPrincipal UserDTO user, @RequestBody Invoice invoice) {
@@ -48,7 +49,7 @@ public class InvoiceController extends ExceptionHandling {
         );
     }
 
-    @GetMapping("/list")
+    @GetMapping(value = "/list")
     ResponseEntity<HttpResponse> getInvoices(@AuthenticationPrincipal UserDTO user, @RequestParam Optional<Integer> page, Optional<Integer> size) {
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
@@ -69,8 +70,9 @@ public class InvoiceController extends ExceptionHandling {
                         .status(OK)
                         .statusCode(OK.value())
                         .data(Map.of("user", userService.getUserById(user.getId()),
-                                "customers", customerService.getCustomers()))
-                        .message("Customers retrieved!")
+                                "customers", customerService.getCustomers(),
+                                "services", serviceCustomerService.getServices()))
+                        .message("Add new invoice!")
                         .timeStamp(now().toString())
                         .build()
         );
@@ -92,16 +94,20 @@ public class InvoiceController extends ExceptionHandling {
         );
     }
 
-    @PostMapping("/add-to-customer/{id}")
-    ResponseEntity<HttpResponse> addInvoiceToCustomer(@AuthenticationPrincipal UserDTO user, @PathVariable("id") Long id, @RequestBody Invoice invoice) {
-        invoiceService.addInvoiceToCustomer(id, invoice);
+    @PostMapping("/add-to-customer/{customerId}/{serviceId}")
+    ResponseEntity<HttpResponse> addInvoiceToCustomer(@AuthenticationPrincipal UserDTO user,
+                                                      @PathVariable("customerId") Long customerId,
+                                                      @PathVariable("serviceId") Long serviceId,
+                                                      @RequestBody Invoice invoice) {
+        invoiceService.addInvoiceToCustomer(customerId, serviceId, invoice);
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .status(OK)
                         .statusCode(OK.value())
                         .data(Map.of("user", userService.getUserById(user.getId()),
-                                "customers", customerService.getCustomers()))
-                        .message(String.format("Invoice added to the Customer with id: %s", id))
+                                "customers", customerService.getCustomers(),
+                                "services", serviceCustomerService.getServices()))
+                        .message(String.format("Invoice added to the Customer with id: %s", customerId))
                         .timeStamp(now().toString())
                         .build()
         );

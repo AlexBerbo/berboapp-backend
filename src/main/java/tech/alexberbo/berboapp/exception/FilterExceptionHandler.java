@@ -19,17 +19,16 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Slf4j
 public class FilterExceptionHandler {
     public static void handleExceptions(HttpServletResponse response, Exception e) {
-        HttpResponse httpResponse;
         if(e instanceof BadCredentialsException || e instanceof ApiException ||
                 e instanceof DisabledException || e instanceof LockedException) {
-            httpResponse = getHttpResponse(response, e.getMessage(), BAD_REQUEST);
+            HttpResponse httpResponse = getHttpResponse(response, e.getMessage(), BAD_REQUEST);
             writeResponse(httpResponse, response);
         } else if (e instanceof TokenExpiredException) {
-            httpResponse = getHttpResponse(response, "You need to login again!", UNAUTHORIZED);
+            HttpResponse httpResponse = getHttpResponse(response, "You need to login again!", UNAUTHORIZED);
             writeResponse(httpResponse, response);
         }
         else {
-            httpResponse = getHttpResponse(response, "An Error occurred, please try again later!", INTERNAL_SERVER_ERROR);
+            HttpResponse httpResponse = getHttpResponse(response, "An Error occurred, please try again later!", INTERNAL_SERVER_ERROR);
             writeResponse(httpResponse, response);
         }
         log.error(e.getMessage());
@@ -44,6 +43,7 @@ public class FilterExceptionHandler {
             out.flush();
         } catch (Exception e) {
             log.error(e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -51,8 +51,7 @@ public class FilterExceptionHandler {
         HttpResponse httpResponse = HttpResponse.builder()
                 .status(httpStatus)
                 .statusCode(httpStatus.value())
-                .reason(httpStatus.getReasonPhrase())
-                .message(message)
+                .reason(message)
                 .timeStamp(now().toString())
                 .build();
         response.setContentType(APPLICATION_JSON_VALUE);

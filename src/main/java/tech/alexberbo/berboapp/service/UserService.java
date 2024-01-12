@@ -1,5 +1,6 @@
 package tech.alexberbo.berboapp.service;
 
+import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 import tech.alexberbo.berboapp.dto.UserDTO;
 import tech.alexberbo.berboapp.exception.CodeExpiredException;
@@ -25,4 +26,5 @@ public interface UserService {
     void updateSettings(Long userId, Boolean enabled, Boolean notLocked);
     UserDTO updateMfa(String email);
     void updateImage(UserDTO user, MultipartFile image);
+    Page<UserDTO> getUsers(int page, int size);
 }

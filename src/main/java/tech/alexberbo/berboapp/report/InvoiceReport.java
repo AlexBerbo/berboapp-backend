@@ -77,12 +77,14 @@ public class InvoiceReport {
                 Row row = sheet.createRow(rowNumber++);
                 row.createCell(0).setCellValue(invoice.getId());
                 row.createCell(1).setCellValue(invoice.getInvoiceNumber());
-                row.createCell(2).setCellValue(invoice.getServices());
-                row.createCell(3).setCellValue("$" + invoice.getTotal());
-                row.createCell(4).setCellValue(invoice.getCustomer().getId());
-                row.createCell(4).setCellValue(invoice.getCustomer().getName());
-                row.createCell(5).setCellValue(invoice.getStatus());
-                row.createCell(6).setCellValue(DateFormatUtils.format(invoice.getCreatedAt(), DATE_FORMAT));
+                row.createCell(2).setCellValue(invoice.getServiceCustomer().getId());
+                row.createCell(3).setCellValue(invoice.getServiceCustomer().getServiceCustomerNumber());
+                row.createCell(4).setCellValue(invoice.getServiceCustomer().getName());
+                row.createCell(5).setCellValue("$" + invoice.getTotal());
+                row.createCell(6).setCellValue(invoice.getCustomer().getId());
+                row.createCell(7).setCellValue(invoice.getCustomer().getName());
+                row.createCell(8).setCellValue(invoice.getStatus());
+                row.createCell(9).setCellValue(DateFormatUtils.format(invoice.getCreatedAt(), DATE_FORMAT));
             }
             workbook.write(out);
             return new InputStreamResource(new ByteArrayInputStream(out.toByteArray()));

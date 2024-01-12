@@ -31,8 +31,8 @@ import static tech.alexberbo.berboapp.dtomapper.UserDTOMapper.toUser;
 import static tech.alexberbo.berboapp.util.UserUtil.getAuthenticatedUser;
 
 /**
-    This is a controller that controls what business logic will be executed when a request comes in.
-    Which services and repositories are used for the corresponding endpoints
+ * This is a controller that controls what business logic will be executed when a request comes in.
+ * Which services and repositories are used for the corresponding endpoints
  */
 
 @RestController
@@ -47,10 +47,10 @@ public class UserController extends ExceptionHandling {
     private final RoleService roleService;
 
     /**
-        Login method, this method will receive email and password from the user,
-        check if the user exists, map it to the DTO, if correct spring will let the user in
-        and depending on whether the user uses MFA the corresponding logic will occur and execute.
-        Assigning the user new JWToken for accessing the protected endpoints.
+     * Login method, this method will receive email and password from the user,
+     * check if the user exists, map it to the DTO, if correct spring will let the user in
+     * and depending on whether the user uses MFA the corresponding logic will occur and execute.
+     * Assigning the user new JWToken for accessing the protected endpoints.
      */
     @PostMapping(path = "/login")
     public ResponseEntity<HttpResponse> login(@RequestBody @Valid LoginForm loginForm) {
@@ -59,9 +59,9 @@ public class UserController extends ExceptionHandling {
     }
 
     /**
-        Register method that is receiving the desired inputs from the user, using the User Service and repository
-        to check if the user is already registered in the database, if yes, exception to the user will be thrown.
-        Registering the user data to the DB.
+     * Register method that is receiving the desired inputs from the user, using the User Service and repository
+     * to check if the user is already registered in the database, if yes, exception to the user will be thrown.
+     * Registering the user data to the DB.
      */
     @PostMapping(path = "/register")
     public ResponseEntity<HttpResponse> register(@RequestBody @Valid User user) throws EmailExistsException {
@@ -79,8 +79,8 @@ public class UserController extends ExceptionHandling {
     }
 
     /**
-        This one retrieves a user that is currently logged in, by calling the authentication method and getting the username (email)
-      */
+     * This one retrieves a user that is currently logged in, by calling the authentication method and getting the username (email)
+     */
     @GetMapping(path = "/profile")
     public ResponseEntity<HttpResponse> profile(Authentication authentication) {
         UserDTO user = userService.getUserByEmail(getAuthenticatedUser(authentication).getEmail());
@@ -99,12 +99,12 @@ public class UserController extends ExceptionHandling {
     }
 
     /**
-        Here we check if the header is there and if the token in that header is valid or not.
-        If It's valid, we proceed and give the user a new token, so he can continue working on the app.
+     * Here we check if the header is there and if the token in that header is valid or not.
+     * If It's valid, we proceed and give the user a new token, so he can continue working on the app.
      */
     @GetMapping(path = "/refresh/token")
     public ResponseEntity<HttpResponse> refreshToken(HttpServletRequest request) {
-        if(isHeaderAndTokenValid(request)) {
+        if (isHeaderAndTokenValid(request)) {
             String token = request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length());
             UserDTO user = userService.getUserById(jwtProvider.getSubject(token, request));
             return ResponseEntity.ok().body(
@@ -133,7 +133,7 @@ public class UserController extends ExceptionHandling {
     }
 
     /**
-     Checks to see if the authorization header is present or not, and if the token in the authorization header is valid
+     * Checks to see if the authorization header is present or not, and if the token in the authorization header is valid
      */
     private boolean isHeaderAndTokenValid(HttpServletRequest request) {
         String token = request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length());
@@ -144,14 +144,14 @@ public class UserController extends ExceptionHandling {
     }
 
     /**
-        Creates the userId URI
+     * Creates the userId URI
      */
     private URI getUri() {
         return URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/get/<userId>").toUriString());
     }
 
     /**
-        This method generates and sends the verification code to the user's email
+     * This method generates and sends the verification code to the user's email
      */
     private ResponseEntity<HttpResponse> sendVerificationCode(UserDTO user) {
         userService.sendVerificationCode(user);
@@ -169,7 +169,7 @@ public class UserController extends ExceptionHandling {
     }
 
     /**
-         If the user is not using the MFA this response will be sent, and the user will get access and refresh token
+     * If the user is not using the MFA this response will be sent, and the user will get access and refresh token
      */
     private ResponseEntity<HttpResponse> sendResponse(UserDTO user) {
         return ResponseEntity.ok().body(
@@ -187,9 +187,9 @@ public class UserController extends ExceptionHandling {
     }
 
     /**
-        This method will return the user principal, it takes the user DTO as a parameter, and then that user DTO is
-        converted into the real user using BeanUtils converter by user that is passed and the role of that user.
-        That is all mapped in the DtoMapper package.
+     * This method will return the user principal, it takes the user DTO as a parameter, and then that user DTO is
+     * converted into the real user using BeanUtils converter by user that is passed and the role of that user.
+     * That is all mapped in the DtoMapper package.
      */
     private UserPrincipal getUserPrincipal(UserDTO user) {
         return new UserPrincipal(toUser(userService.getUserByEmail(user.getEmail())), roleService.getUserRoleById(user.getId()));

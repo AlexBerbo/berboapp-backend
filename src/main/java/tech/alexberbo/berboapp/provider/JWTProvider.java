@@ -23,30 +23,25 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static io.micrometer.common.util.StringUtils.isNotEmpty;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.stream;
+import static tech.alexberbo.berboapp.constant.security.SecurityConstants.*;
 
 /**
- This is where the JWToken is generated.
- This is how the token is generated and how the info and settings are set.
- Auth0 is being used as a third party library for setting all the information. <a href="https://github.com/auth0/java-jwt">Documentation</a>
+ * This is where the JWToken is generated.
+ * This is how the token is generated and how the info and settings are set.
+ * Auth0 is being used as a third party library for setting all the information. <a href="https://github.com/auth0/java-jwt">Documentation</a>
  */
 @Component
 @RequiredArgsConstructor
 public class JWTProvider {
-    private static final String ALEXBERBO = "alexberbo.tech RS";
-    private static final String ALEXBERBO_MANAGEMENT = "alexberbo Team";
-    private static final long TOKEN_EXPIRATION_DATE = 600000;
-    private static final long REFRESH_TOKEN_EXPIRATION_DATE = 1200000;
-    private static final String AUTHORITIES = "authorities";
     @Value("${jwt.secret}")
     private String secret;
     private final UserService userService;
 
     /**
-        This is the pattern to create the access token and set the information about it.
-        To who it belongs (subject), who is the creator and what authorities the owner has, and with what algorithm is set for encryption.
+     * This is the pattern to create the access token and set the information about it.
+     * To who it belongs (subject), who is the creator and what authorities the owner has, and with what algorithm is set for encryption.
      */
     public String createAccessToken(UserPrincipal userPrincipal) {
         return JWT.create()
@@ -59,8 +54,8 @@ public class JWTProvider {
     }
 
     /**
-        This is the pattern tho set the refresh token, everything is the same as for the access token, it just does not have the claims.
-        Because it will only be set to the user that gets the access token first, and then this one.
+     * This is the pattern tho set the refresh token, everything is the same as for the access token, it just does not have the claims.
+     * Because it will only be set to the user that gets the access token first, and then this one.
      */
     public String createRefreshAccessToken(UserPrincipal userPrincipal) {
         return JWT.create()
@@ -73,8 +68,8 @@ public class JWTProvider {
     }
 
     /**
-        What this is doing: Setting the user authenticated after user's token has been verified.
-        Passing the info to Spring so the can log in and access the app.
+     * What this is doing: Setting the user authenticated after user's token has been verified.
+     * Passing the info to Spring so the can log in and access the app.
      */
     public Authentication getAuthentication(Long userId, List<GrantedAuthority> authorities, HttpServletRequest request) {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userService.getUserById(userId), null, authorities);
@@ -83,9 +78,9 @@ public class JWTProvider {
     }
 
     /**
-        Get the claims of the token, in this case user authorities.
-        Just like in userPrincipal class, map the authorities to new SGAuths and collect them to a list.
-        This is used in the AuthorizationFilter class to set the user authorities for the getAuthentication method.
+     * Get the claims of the token, in this case user authorities.
+     * Just like in userPrincipal class, map the authorities to new SGAuths and collect them to a list.
+     * This is used in the AuthorizationFilter class to set the user authorities for the getAuthentication method.
      */
     public List<GrantedAuthority> getAuthorities(String token) {
         String[] authorities = getTokenAuthorities(token);
@@ -93,12 +88,13 @@ public class JWTProvider {
     }
 
     /**
-        Getting the user's email that we will set in the AuthorizationFilter class.
+     * Getting the user's email that we will set in the AuthorizationFilter class.
      */
     public Long getSubject(String token, HttpServletRequest request) {
         try {
             return Long.valueOf(getJwtVerifier().verify(token).getSubject());
         } catch (TokenExpiredException e) {
+            System.out.println(e.getMessage());
             request.setAttribute("tokenExpired", e.getMessage());
             throw e;
         } catch (InvalidClaimException e) {
@@ -119,9 +115,9 @@ public class JWTProvider {
     }
 
     /**
-     Verifying the token with the verifier from the documentation that is really helpful, and it can be found on this link here ->
-     <a href="https://github.com/auth0/java-jwt">Documentation</a>.
-     Getting the claims (Authorities) from the token and returning them as an array.
+     * Verifying the token with the verifier from the documentation that is really helpful, and it can be found on this link here ->
+     * <a href="https://github.com/auth0/java-jwt">Documentation</a>.
+     * Getting the claims (Authorities) from the token and returning them as an array.
      */
     private String[] getTokenAuthorities(String token) {
         JWTVerifier verifier = getJwtVerifier();
@@ -129,17 +125,17 @@ public class JWTProvider {
     }
 
     /**
-        This returns an array of Authorities (User permissions).
-        This method is used in the createAccessToken method when the claims (Authorities) are being set.
+     * This returns an array of Authorities (User permissions).
+     * This method is used in the createAccessToken method when the claims (Authorities) are being set.
      */
     private String[] getUserPermission(UserPrincipal userPrincipal) {
         return userPrincipal.getAuthorities().stream().map(GrantedAuthority::getAuthority).toArray(String[]::new);
     }
 
     /**
-        Verifier that will be used to verify data about the token and the token itself.
-        Setting the algorithm in this case we use HMAC512.
-        We sign the algorithm with our key meaning the key will be able to decrypt the token later in the jwt.io website.
+     * Verifier that will be used to verify data about the token and the token itself.
+     * Setting the algorithm in this case we use HMAC512.
+     * We sign the algorithm with our key meaning the key will be able to decrypt the token later in the jwt.io website.
      */
     private JWTVerifier getJwtVerifier() {
         JWTVerifier verifier;

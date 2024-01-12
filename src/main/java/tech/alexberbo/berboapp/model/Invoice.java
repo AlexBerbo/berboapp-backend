@@ -24,7 +24,7 @@ public class Invoice {
     @GeneratedValue(strategy = IDENTITY)
     private Long id;
     private String invoiceNumber;
-    private String services;
+    private String serviceName;
     private String status;
     private double total;
     private Date createdAt;
@@ -32,7 +32,8 @@ public class Invoice {
     @JoinColumn(name = "customer_id", nullable = false)
     @JsonIgnore
     private Customer customer;
-    // TODO: Implement Real Service class and function
-    // @OneToMany(mappedBy = "invoice", fetch = EAGER, cascade = ALL)
-    // private Collection<Service> service;
+    @OneToOne
+    @JoinColumn(name = "service_customer_id", nullable = false)
+    @JsonIgnore
+    private ServiceCustomer serviceCustomer;
 }
