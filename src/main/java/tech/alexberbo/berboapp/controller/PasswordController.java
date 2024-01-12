@@ -11,6 +11,7 @@ import tech.alexberbo.berboapp.event.NewUserEvent;
 import tech.alexberbo.berboapp.exception.EmailDoesNotExistException;
 import tech.alexberbo.berboapp.exception.ExceptionHandling;
 import tech.alexberbo.berboapp.exception.PasswordResetCodeExpiredException;
+import tech.alexberbo.berboapp.form.ResetPasswordForm;
 import tech.alexberbo.berboapp.form.UpdatePasswordForm;
 import tech.alexberbo.berboapp.model.HttpResponse;
 import tech.alexberbo.berboapp.service.EventService;
@@ -72,11 +73,9 @@ public class PasswordController extends ExceptionHandling {
      Reset password post method, gets the new password twice, and checks for its equality,
      other checks and logic is done in the User Repository implementation
      */
-    @PostMapping("/reset-password")
-    public ResponseEntity<HttpResponse> renewPassword(@RequestParam("password") String password,
-                                                      @RequestParam("confirmPassword") String confirmPassword,
-                                                      @RequestParam("url") String url) {
-        userService.renewPassword(url, password, confirmPassword);
+    @PutMapping("/renew-password")
+    public ResponseEntity<HttpResponse> renewPassword(@RequestBody @Valid ResetPasswordForm form) {
+        userService.resetPassword(form.getUserId(), form.getNewPassword(), form.getConfirmNewPassword());
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .status(OK)

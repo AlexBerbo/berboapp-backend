@@ -3,6 +3,7 @@ package tech.alexberbo.berboapp.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import tech.alexberbo.berboapp.enumerator.EventType;
+import tech.alexberbo.berboapp.model.Message;
 import tech.alexberbo.berboapp.model.UserEvent;
 import tech.alexberbo.berboapp.repository.EventRepository;
 import tech.alexberbo.berboapp.service.EventService;
@@ -25,5 +26,15 @@ public class EventServiceImpl implements EventService {
     @Override
     public void addUserEvent(Long userId, EventType eventType, String device, String ipAddress) {
 
+    }
+
+    @Override
+    public UserEvent getUserEvent(Long id) {
+        return eventRepository.getUserEvent(id);
+    }
+
+    @Override
+    public void sendMessage(Message message, String email) {
+        eventRepository.sendMessage(message, email);
     }
 }

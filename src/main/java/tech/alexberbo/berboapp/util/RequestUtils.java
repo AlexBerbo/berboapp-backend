@@ -22,9 +22,9 @@ public class RequestUtils {
     }
 
     private static String setIpAddress(HttpServletRequest request, String ipAddress) {
-        if(request != null) {
+        if (request != null) {
             ipAddress = request.getHeader(X_FORWARDED_FOR_HEADER);
-            if(ipAddress == null) {
+            if (ipAddress == null) {
                 ipAddress = request.getRemoteAddr();
             }
         }

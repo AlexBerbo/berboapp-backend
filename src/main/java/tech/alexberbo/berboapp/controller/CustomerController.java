@@ -2,7 +2,10 @@ package tech.alexberbo.berboapp.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -10,14 +13,18 @@ import tech.alexberbo.berboapp.dto.UserDTO;
 import tech.alexberbo.berboapp.exception.ExceptionHandling;
 import tech.alexberbo.berboapp.model.Customer;
 import tech.alexberbo.berboapp.model.HttpResponse;
+import tech.alexberbo.berboapp.report.CustomerReport;
 import tech.alexberbo.berboapp.service.CustomerService;
 import tech.alexberbo.berboapp.service.UserService;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static java.time.LocalTime.now;
+import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -34,9 +41,15 @@ public class CustomerController extends ExceptionHandling {
                                               @RequestParam Optional<Integer> page,
                                               @RequestParam Optional<Integer> size) {
         return ResponseEntity.ok().body(
-                createResponse(OK, user, customerService.getCustomers(
-                                page.orElse(0),
-                                size.orElse(10)), "Customers retrieved!")
+                HttpResponse.builder()
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .data(Map.of("user", userService.getUserById(user.getId()),
+                                "customer", customerService.getCustomers(page.orElse(0), size.orElse(10)),
+                                "stats", customerService.getStats()))
+                        .message("Customers retrieved!")
+                        .timeStamp(now().toString())
+                        .build()
         );
     }
 
@@ -65,7 +78,7 @@ public class CustomerController extends ExceptionHandling {
     ResponseEntity<HttpResponse> updateCustomer(@AuthenticationPrincipal UserDTO user, @RequestBody Customer customer) {
         Customer updateCustomer = customerService.updateCustomer(customer);
         return ResponseEntity.ok().body(
-                createResponse(CREATED, user, updateCustomer, "Customer updated!")
+                createResponse(OK, user, updateCustomer, "Customer updated!")
         );
     }
 
@@ -75,6 +88,20 @@ public class CustomerController extends ExceptionHandling {
         return ResponseEntity.ok().body(
                 createResponse(OK, user, customer, "Customer retrieved!")
         );
+    }
+
+    @GetMapping("/download/report")
+    ResponseEntity<Resource> downloadReport() {
+        List<Customer> customers = new ArrayList<>();
+        customerService.getCustomers().iterator().forEachRemaining(customers::add);
+        CustomerReport report = new CustomerReport(customers);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("File-Name", "customer-report.xlsx");
+        headers.add(CONTENT_DISPOSITION, "attachment;File-name=customer-report.xlsx");
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
+                .headers(headers)
+                .body(report.export());
     }
 
     private HttpResponse createResponse(HttpStatus status, UserDTO user, Object customer, String message) {

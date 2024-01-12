@@ -24,11 +24,16 @@ public class Invoice {
     @GeneratedValue(strategy = IDENTITY)
     private Long id;
     private String invoiceNumber;
-    private String services;
+    private String serviceName;
+    private String status;
     private double total;
     private Date createdAt;
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
     @JsonIgnore
     private Customer customer;
+    @OneToOne
+    @JoinColumn(name = "service_customer_id", nullable = false)
+    @JsonIgnore
+    private ServiceCustomer serviceCustomer;
 }

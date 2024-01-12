@@ -7,7 +7,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,14 +19,15 @@ import tech.alexberbo.berboapp.filter.AuthorizationFilter;
 import tech.alexberbo.berboapp.handler.CustomAccessDeniedHandler;
 import tech.alexberbo.berboapp.handler.CustomAuthenticationEntryPoint;
 
+import static org.springframework.security.config.Customizer.withDefaults;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 import static tech.alexberbo.berboapp.constant.security.SecurityConstants.PUBLIC_URLS;
 
 /**
-    Custom security configuration, allowing certain urls to be permitted without authentication, making other
-    protected urls protected with our logic that is done with implementing the JWToken system, adding certain filters,
-    handlers and our custom userDetailService. Providing an authentication manager and setting the password encoder.
-    Enabling method security for easy management of authorities in the controller package and classes.
+ * Custom security configuration, allowing certain urls to be permitted without authentication, making other
+ * protected urls protected with our logic that is done with implementing the JWToken system, adding certain filters,
+ * handlers and our custom userDetailService. Providing an authentication manager and setting the password encoder.
+ * Enabling method security for easy management of authorities in the controller package and classes.
  */
 @Configuration
 @EnableWebSecurity
@@ -39,16 +39,17 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final UserDetailsService userDetailsService;
     private final AuthorizationFilter authorizationFilter;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
-        http.cors(Customizer.withDefaults());
+        http.cors(withDefaults());
         http.sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(STATELESS));
         http.authorizeHttpRequests(matcher -> matcher.requestMatchers(PUBLIC_URLS).permitAll());
         http.authorizeHttpRequests(matcher -> matcher.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll());
         http.authorizeHttpRequests(matcher -> matcher.requestMatchers(HttpMethod.DELETE, "/user/delete/**").hasAnyAuthority("DELETE:USER"));
         http.authorizeHttpRequests(matcher -> matcher.requestMatchers(HttpMethod.DELETE, "/customer/delete/**").hasAnyAuthority("DELETE:CUSTOMER"));
-        http.exceptionHandling( e -> e.accessDeniedHandler(customAccessDeniedHandler).authenticationEntryPoint(customAuthenticationEntryPoint));
+        http.exceptionHandling(e -> e.accessDeniedHandler(customAccessDeniedHandler).authenticationEntryPoint(customAuthenticationEntryPoint));
         http.authorizeHttpRequests(matcher -> matcher.anyRequest().authenticated());
         http.addFilterBefore(authorizationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

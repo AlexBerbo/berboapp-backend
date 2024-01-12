@@ -2,9 +2,6 @@ package tech.alexberbo.berboapp.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,16 +20,10 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 @NoArgsConstructor
 @JsonInclude(Include.NON_DEFAULT)
 public class User {
-    @NotNull(message = "Id cannot be null or empty!")
     private Long id;
-    @NotEmpty(message = "First Name cannot be empty!")
     private String firstName;
-    @NotEmpty(message = "Last Name cannot be empty!")
     private String lastName;
-    @NotEmpty(message = "Email cannot be empty!")
-    @Email(message = "Invalid Email! Please enter a valid Email address!")
     private String email;
-    @NotEmpty(message = "Password cannot be empty!")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     private String address;

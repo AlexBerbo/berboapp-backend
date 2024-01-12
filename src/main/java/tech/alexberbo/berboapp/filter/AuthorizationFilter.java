@@ -30,23 +30,26 @@ import static tech.alexberbo.berboapp.exception.FilterExceptionHandler.handleExc
 @Slf4j
 public class AuthorizationFilter extends OncePerRequestFilter {
     private final JWTProvider jwtProvider;
+
     /**
-     Here a user is passing the token, and we are checking if the token is valid,
-     and we are telling spring that the token is good, assigning the token to its rightful
-     owner and setting the user as authenticated, else we are clearing the spring context
-     removing access for the user, then we let the filterChain do its own thing of going through
-     other important filters and returning corresponding info to the user.
+     * Here a user is passing the token, and we are checking if the token is valid,
+     * and we are telling spring that the token is good, assigning the token to its rightful
+     * owner and setting the user as authenticated, else we are clearing the spring context
+     * removing access for the user, then we let the filterChain do its own thing of going through
+     * other important filters and returning corresponding info to the user.
      */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filter) throws ServletException, IOException {
         try {
             String token = getToken(request);
             Long userId = getUserId(request);
-            if(jwtProvider.isTokenValid(token, userId)) {
+            if (jwtProvider.isTokenValid(token, userId)) {
                 List<GrantedAuthority> authorities = jwtProvider.getAuthorities(token);
                 Authentication authentication = jwtProvider.getAuthentication(userId, authorities, request);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            } else { SecurityContextHolder.clearContext(); }
+            } else {
+                SecurityContextHolder.clearContext();
+            }
             filter.doFilter(request, response);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -57,7 +60,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         return request.getHeader(AUTHORIZATION) == null || !request.getHeader(AUTHORIZATION).startsWith(TOKEN_PREFIX) ||
-                request.getMethod().equalsIgnoreCase(OPTIONS.name()) || asList(PUBLIC_URLS).contains(request.getRequestURI()) ;
+                request.getMethod().equalsIgnoreCase(OPTIONS.name()) || asList(PUBLIC_URLS).contains(request.getRequestURI());
     }
 
     private Long getUserId(HttpServletRequest request) {
